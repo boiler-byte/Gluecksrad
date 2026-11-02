@@ -145,7 +145,7 @@ body{
   gap:10px 10px;
   background-image:
     linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,.08)),
-    url('buchstabenwand.png');
+    url('buchstabenwand.webp');
   background-repeat:no-repeat;
   background-size:contain;
   background-position:center center;
@@ -226,7 +226,7 @@ body{
 
 /* V4: Buchstabenwand skaliert, ohne Overlay, neue Tile-Zustaende */
 .puzzle-board{
-  background-image:url('buchstabenwand.png');
+  background-image:url('buchstabenwand.webp');
   background-repeat:no-repeat;
   background-size:contain;
   background-position:center center;
@@ -545,14 +545,16 @@ body{
   .scoreboard-bar .bank-label:before{content:"T";font-size:8px;font-weight:900;letter-spacing:0}
 }
 
-/* V6 – animierte Buchstabenfee (18 Originalposen aus der Sprite-Demo). */
+/* V12 – Buchstabenfee auf grossen Displays ca. 320px hoch.
+   Alle Feen verwenden 300 x 350 Pixel grosse Sprite-Frames. */
 .puzzle-board .fee-character {
   position:absolute;
-  z-index:6;
-  bottom:10%;
-  left:6%;
-  width:clamp(83px,12vw,152px);
-  aspect-ratio:260 / 360;
+  z-index:12; /* Immer vor den Kacheln, auch auf kleinen Bildschirmen. */
+  bottom:10%; /* Eine Stufe hoeher auf der Treppe. */
+  left:90px;
+  /* 274 * 350 / 300 = ca. 320 px maximale Hoehe. */
+  width:clamp(210px,25vw,274px);
+  aspect-ratio:300 / 350;
   pointer-events:none;
   transform:translateX(-50%);
   user-select:none;
@@ -608,14 +610,119 @@ body{
   75%{transform:translateY(0) scale(.98)}
 }
 @media(max-width:760px){
-  .puzzle-board .fee-character{width:clamp(75px,20vw,108px);bottom:10%}
+  .puzzle-board .fee-character{width:clamp(154px,42vw,225px);bottom:10%}
 }
 @media(max-width:440px){
-  .puzzle-board .fee-character{width:clamp(69px,22vw,99px);bottom:9%;}
+  .puzzle-board .fee-character{width:clamp(144px,45vw,206px);bottom:10%}
 }
 @media(max-width:345px){
-  .puzzle-board .fee-character{width:69px;bottom:8%}
+  .puzzle-board .fee-character{width:144px;bottom:10%}
 }
 @media(prefers-reduced-motion:reduce){
   .fee-character.fee-celebrating .fee-sprite,.puzzle-board .tile.tile-lit,.puzzle-board .tile.tile-turning{animation:none!important}
+}
+
+/* V9: höchstens zwölf Felder pro Zeile – zusätzliche Bühnenfläche an den Seiten. */
+.puzzle-board .puzzle-lines {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  gap:10px;
+}
+.puzzle-board .puzzle-line {
+  display:flex;
+  flex-wrap:nowrap;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  width:max-content;
+  max-width:none;
+}
+.puzzle-board .puzzle-line .word {flex:0 0 auto}
+@media(max-width:440px){
+  .puzzle-board .puzzle-lines{gap:7px}
+  .puzzle-board .puzzle-line{gap:4px}
+}
+
+/* Vier oder mehr Zeilen passen auch in die beschnittene mobile Wand. */
+@media(max-width:760px) {
+  .puzzle-board.many-lines .puzzle-lines{gap:4px}
+  .puzzle-board.many-lines .tile{height:clamp(23px,5vw,31px);border-bottom-width:2px}
+  .puzzle-board.dense-lines .puzzle-lines{gap:3px}
+  .puzzle-board.dense-lines .tile{height:clamp(20px,4.4vw,26px)}
+}
+
+/* V10: Anzahl und Verteilung der Sonderfelder wechseln in jeder Runde. */
+.wheel-specials{
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+  gap:6px;min-height:25px;margin:2px auto 8px;
+}
+.wheel-special-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:24px;padding:4px 9px;border-radius:999px;
+  border:1px solid rgba(255,239,178,.65);
+  font-size:10px;font-weight:950;letter-spacing:.065em;
+  color:#fff4e4;text-shadow:0 1px 2px rgba(0,0,0,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 2px 8px rgba(0,0,0,.2);
+}
+.wheel-special-pill.effect-bankrupt{background:#35223e;border-color:#bd90c5}
+.wheel-special-pill.effect-skip{background:#b14e73;border-color:#ffd0d9}
+.wheel-special-pill.effect-extra{background:#116d8a;border-color:#9df4ff}
+@media(max-width:760px){.wheel-card .wheel-specials{grid-column:1/-1}}
+@media(max-width:440px){.wheel-special-pill{font-size:9px;padding:4px 7px}}
+
+/* V11: Spielerfelder ohne sichtbare Input-Labels, zugaenglich durch aria-label. */
+.config-fields {align-items:center}
+.config-fields > select,.config-fields > input {width:100%;min-width:0}
+/* Alle Feen werden im Startmenue aus feen.js eingelesen. */
+.fairy-config {
+  display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;
+  gap:14px;min-width:0;margin-top:13px;padding:8px 12px;
+  border:1px solid rgba(255,219,121,.38);border-radius:12px;
+  background:linear-gradient(180deg,rgba(63,10,10,.95),rgba(38,6,6,.98));
+}
+.fairy-choice-preview {
+  width:52px;height:61px;justify-self:center;
+  background-image:url('buchstabenfee-atlas.webp');
+  background-position:0 0;background-size:600% 300%;background-repeat:no-repeat;
+  image-rendering:crisp-edges;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.75));
+}
+.fairy-choice-field {min-width:0;text-align:left}
+.fairy-choice-field .field-title {display:block;margin:0 0 6px}
+.fairy-select {
+  display:block;width:100%;min-height:41px;padding:8px 11px;
+  border:1px solid rgba(255,219,121,.48);border-radius:9px;
+  color:#fff8e9;background:#271019;font:600 13px system-ui,sans-serif;
+  cursor:pointer;
+}
+.fairy-select:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+@media(max-width:440px){
+  .fairy-config{grid-template-columns:46px minmax(0,1fr);gap:10px;margin-top:9px;padding:6px 9px}
+  .fairy-choice-preview{width:44px;height:52px}
+  .fairy-select{min-height:38px;font-size:12px}
+}
+
+
+/* V12: Lesbare Optionen im nativen Spielertyp-Menue auf hellen Betriebssystem-Themes.
+   Das geschlossene Feld bleibt dunkel mit heller Beschriftung, die aufgeklappte
+   Liste dagegen hell mit dunkler Schrift. Der Pfeil ist bewusst CSS-gezeichnet. */
+.config-fields select.config-type {
+  color-scheme:light;
+  -webkit-appearance:none;
+  appearance:none;
+  color:#fff8e9;
+  background-color:#321015;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23ffe1a2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),linear-gradient(180deg,rgba(63,10,10,.95),rgba(38,6,6,.98));
+  background-repeat:no-repeat,no-repeat;
+  background-position:right 8px center,center;
+  background-size:12px 8px,100% 100%;
+  padding-right:24px;
+}
+.config-fields select.config-type option {
+  background-color:#fff8e9;
+  color:#28121b;
 }

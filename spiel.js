@@ -4,13 +4,14 @@
 
   const ROUNDS = 5;
   const SAVE_KEY = 'gluecksradGame';
-  const SAVE_VERSION = 6;
+  const SAVE_VERSION = 13;
   const VOWEL_COST = 250;
   const SOLVE_BONUS = 500;
   const VOWELS = 'AEIOUÄÖÜ';
   const KEY_ROWS = ['QWERTZUIOPÜ', 'ASDFGHJKLÖÄ', 'YXCVBNM'];
   const ALL_KEYS = KEY_ROWS.join('').split('');
-  const SECTORS = [
+  // 18 feste Zahlenpositionen, in jeder Runde mit neu gelosten Sonderfeldern belegt.
+  const BASE_SECTORS = [
     { label: '100', points: 100, color: '#f7ca6b' },
     { label: '400', points: 400, color: '#5bd3dd' },
     { label: '250', points: 250, color: '#f79ab8' },
@@ -18,19 +19,33 @@
     { label: '150', points: 150, color: '#f9df89' },
     { label: '800', points: 800, color: '#91dfb0' },
     { label: '200', points: 200, color: '#f9a776' },
-    { label: 'BANKROTT', effect: 'bankrupt', color: '#35223e', light: true },
+    { label: '450', points: 450, color: '#c0abd7' },
     { label: '500', points: 500, color: '#57d4de' },
     { label: '300', points: 300, color: '#fedb73' },
     { label: '900', points: 900, color: '#f4a0ba' },
     { label: '100', points: 100, color: '#aedcbd' },
     { label: '700', points: 700, color: '#e3b3f0' },
-    { label: 'AUSSETZEN', effect: 'skip', color: '#b14e73', light: true },
+    { label: '600', points: 600, color: '#d6b5a1' },
     { label: '350', points: 350, color: '#f3b68f' },
     { label: '1200', points: 1200, color: '#ffe783' },
     { label: '200', points: 200, color: '#7fcfde' },
     { label: '500', points: 500, color: '#efa7e2' }
   ];
-  const STEP = 360 / SECTORS.length;
+  const SPECIAL_SECTORS = {
+    bankrupt: { label: 'BANKROTT', effect: 'bankrupt', color: '#35223e', light: true },
+    skip: { label: 'AUSSETZEN', effect: 'skip', color: '#b14e73', light: true },
+    extra: { label: 'EXTRADREH', effect: 'extra', color: '#116d8a', light: true }
+  };
+  // [min, max] pro Runde: die Spannen werden einmal am Rundenanfang ausgelost.
+  const ROUND_SPECIAL_COUNTS = [
+    { bankrupt: [0, 0], skip: [1, 1], extra: [0, 0] },
+    { bankrupt: [0, 0], skip: [1, 1], extra: [1, 1] },
+    { bankrupt: [0, 1], skip: [1, 1], extra: [0, 1] },
+    { bankrupt: [1, 1], skip: [1, 1], extra: [1, 1] },
+    { bankrupt: [1, 2], skip: [1, 1], extra: [1, 2] }
+  ];
+  let wheelSectors = BASE_SECTORS.slice();
+  const STEP = 360 / BASE_SECTORS.length;
   const DIFFICULTIES = {
     easy: { accuracy: .47, solveFrom: .85, solveChance: .22, solveAccuracy: .60, vowelChance: .08, think: 900 },
     medium: { accuracy: .72, solveFrom: .70, solveChance: .38, solveAccuracy: .83, vowelChance: .17, think: 760 },
@@ -44,6 +59,7 @@
   let audioContext = null;
   let wheelAngle = 0;
   let spinFrame = null;
+  let wheelIntroFrame = null;
   let runToken = 0;
   let toastTimer = null;
   const timers = new Set();
@@ -63,6 +79,9 @@
     timers.clear();
     if (spinFrame !== null) cancelAnimationFrame(spinFrame);
     spinFrame = null;
+    if (wheelIntroFrame !== null) cancelAnimationFrame(wheelIntroFrame);
+    wheelIntroFrame = null;
+    drawWheel();
     runToken += 1;
     $('confettiLayer').replaceChildren();
     fairy.cancel();
@@ -166,27 +185,86 @@
     }
   }
 
-  function drawWheel() {
+  function createRoundSectorEffects(round) {
+    const config = ROUND_SPECIAL_COUNTS[round - 1];
+    const effects = Array(BASE_SECTORS.length).fill(null);
+    const freePositions = shuffled(BASE_SECTORS.map((_, i) => i));
+    for (const effect of ['bankrupt', 'skip', 'extra']) {
+      const [min, max] = config[effect];
+      const count = min + Math.floor(Math.random() * (max - min + 1));
+      for (let i = 0; i < count; i++) effects[freePositions.pop()] = effect;
+    }
+    return effects;
+  }
+  function validSectorEffects(effects, round) {
+    const config = ROUND_SPECIAL_COUNTS[round - 1];
+    if (!config || !Array.isArray(effects) || effects.length !== BASE_SECTORS.length ||
+        !effects.every(effect => effect === null || Object.hasOwn(SPECIAL_SECTORS, effect))) return false;
+    return Object.entries(config).every(([effect, [min, max]]) => {
+      const count = effects.filter(value => value === effect).length;
+      return count >= min && count <= max;
+    });
+  }
+  function applyRoundSectors() {
+    wheelSectors = BASE_SECTORS.map((sector, i) =>
+      game.sectorEffects[i] === null ? sector : SPECIAL_SECTORS[game.sectorEffects[i]]);
+    drawWheel();
+    const legend = $('wheelSpecials');
+    legend.replaceChildren();
+    const labels = [];
+    for (const effect of ['bankrupt', 'skip', 'extra']) {
+      const count = game.sectorEffects.filter(value => value === effect).length;
+      if (!count) continue;
+      const pill = document.createElement('span');
+      pill.className = 'wheel-special-pill effect-' + effect;
+      pill.textContent = count + '× ' + SPECIAL_SECTORS[effect].label;
+      legend.appendChild(pill);
+      labels.push(count + '-mal ' + SPECIAL_SECTORS[effect].label);
+    }
+    legend.setAttribute('aria-label', 'Sonderfelder in Runde ' + game.round + ': ' + labels.join(', '));
+    $('wheelCanvas').setAttribute('aria-label', 'Glücksrad, Runde ' + game.round + '. ' + labels.join(', ') + '. Weitere Felder enthalten Punkte.');
+  }
+
+  // Beim Rundenstart wird jedes vorhandene Sonderfeld einzeln leuchtend
+  // hervorgehoben und gut sichtbar um ca. 30 % vergroessert.
+  function drawWheel(highlight = null) {
     const canvas = $('wheelCanvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const r = 293, center = 300;
-    const step = Math.PI * 2 / SECTORS.length;
+    const step = Math.PI * 2 / wheelSectors.length;
     ctx.clearRect(0, 0, 600, 600);
-    SECTORS.forEach((sector, i) => {
+    function paintSector(sector, i, pulse = 0) {
       const a = -Math.PI / 2 + i * step;
       const start = a - step / 2;
       const end = a + step / 2;
+      ctx.save();
+      if (pulse > 0) {
+        // Anker nahe der Beschriftung: das Feld springt dem Betrachter entgegen.
+        const x = center + Math.cos(a) * 205;
+        const y = center + Math.sin(a) * 205;
+        ctx.translate(x, y);
+        ctx.scale(1 + .30 * pulse, 1 + .30 * pulse);
+        ctx.translate(-x, -y);
+        ctx.shadowColor = '#ffe86b';
+        ctx.shadowBlur = 45 * pulse;
+      }
       ctx.beginPath();
       ctx.moveTo(center, center);
       ctx.arc(center, center, r, start, end);
       ctx.closePath();
       ctx.fillStyle = sector.color;
       ctx.fill();
-      ctx.lineWidth = 2.4;
-      ctx.strokeStyle = '#4a2c53';
+      if (pulse > 0) {
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = 'rgba(255,250,174,' + (.34 * pulse) + ')';
+        ctx.fillRect(0, 0, 600, 600);
+        ctx.restore();
+      }
+      ctx.lineWidth = pulse > 0 ? 2.4 + 6 * pulse : 2.4;
+      ctx.strokeStyle = pulse > 0 ? '#fff1a3' : '#4a2c53';
       ctx.stroke();
-      ctx.save();
       ctx.translate(center, center);
       ctx.rotate(i * step);
       ctx.translate(0, -205);
@@ -201,12 +279,17 @@
         ctx.font = '900 17px system-ui, sans-serif';
         ctx.fillText('AUS', 0, -9);
         ctx.fillText('SETZEN', 0, 10);
+      } else if (sector.effect === 'extra') {
+        ctx.font = '900 16px system-ui, sans-serif';
+        ctx.fillText('EXTRA', 0, -9);
+        ctx.fillText('DREH', 0, 10);
       } else {
         ctx.font = '900 25px system-ui, sans-serif';
         ctx.fillText(sector.label, 0, 0);
       }
       ctx.restore();
-    });
+    }
+    wheelSectors.forEach((sector, i) => paintSector(sector, i));
     ctx.save();
     ctx.translate(center, center);
     ctx.beginPath();
@@ -214,7 +297,7 @@
     ctx.lineWidth = 7;
     ctx.strokeStyle = '#fff1b6';
     ctx.stroke();
-    for (let i = 0; i < SECTORS.length; i++) {
+    for (let i = 0; i < wheelSectors.length; i++) {
       const a = -Math.PI / 2 + (i + .5) * step;
       ctx.beginPath();
       ctx.arc(Math.cos(a) * (r - 15), Math.sin(a) * (r - 15), 3.5, 0, Math.PI * 2);
@@ -231,6 +314,53 @@
     ctx.strokeStyle = '#f2cd71';
     ctx.stroke();
     ctx.restore();
+    if (highlight && wheelSectors[highlight.index]?.effect) {
+      paintSector(wheelSectors[highlight.index], highlight.index, highlight.pulse);
+    }
+  }
+
+  function beginWheelIntroduction() {
+    if (!game || game.phase !== 'intro') return;
+    const token = runToken;
+    const highlighted = game.sectorEffects.map((effect, i) => effect === null ? -1 : i).filter(i => i >= 0);
+    const slotDuration = prefersReducedMotion ? 300 : 780;
+    const stage = document.querySelector('.wheel-stage');
+    // Das Rad steht auf Smartphones unterhalb der Buchstabenwand.
+    // Zum Vorstellen der Felder in den sichtbaren Bereich scrollen.
+    if (stage && (window.innerWidth <= 760 || stage.getBoundingClientRect().bottom > window.innerHeight - 30)) {
+      stage.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
+    }
+    let lastIndex = -1;
+    function animate(time) {
+      if (token !== runToken || !game || game.phase !== 'intro') return;
+      if (startTime === null) startTime = time;
+      const elapsed = time - startTime;
+      const slot = Math.floor(elapsed / slotDuration);
+      if (slot >= highlighted.length) {
+        wheelIntroFrame = null;
+        drawWheel();
+        game.phase = 'idle';
+        game.status = player().name + ' ist dran. Drehe das Rad und sammle Punkte!';
+        render();
+        maybeComputerTurn();
+        return;
+      }
+      if (slot !== lastIndex) {
+        const effect = wheelSectors[highlighted[slot]].effect;
+        $('wheelText').textContent = 'SONDERFELD: ' + SPECIAL_SECTORS[effect].label;
+        tone(750 + slot * 110, .17, 'sine', .05);
+        lastIndex = slot;
+      }
+      const p = (elapsed % slotDuration) / slotDuration;
+      const pulse = prefersReducedMotion ? 0.25 : Math.pow(Math.sin(Math.PI * p), .65);
+      drawWheel({ index: highlighted[slot], pulse });
+      wheelIntroFrame = requestAnimationFrame(animate);
+    }
+    let startTime = null;
+    // Erst scrollen, dann sichtbar aufleuchten lassen.
+    later(() => {
+      if (token === runToken && game?.phase === 'intro') wheelIntroFrame = requestAnimationFrame(animate);
+    }, prefersReducedMotion ? 100 : 560);
   }
 
   function buildKeyboard() {
@@ -261,6 +391,24 @@
       $('name' + i).value = p.name;
     });
   }
+  function setupFairyOptions() {
+    const select = $('fairySelect');
+    select.replaceChildren();
+    for (const option of fairy.variants()) {
+      const el = document.createElement('option');
+      el.value = option.id;
+      el.textContent = option.name;
+      select.appendChild(el);
+    }
+    setFairySelection(fairy.defaultVariant());
+  }
+  function setFairySelection(id) {
+    const selected = fairy.variants().find(option => option.id === id) ||
+      fairy.variants().find(option => option.id === fairy.defaultVariant());
+    if (!selected) return;
+    $('fairySelect').value = selected.id;
+    $('fairyPreview').style.backgroundImage = 'url(' + JSON.stringify(selected.atlas) + ')';
+  }
   function playerTypeChanged(index) {
     const field = $('name' + index);
     const defaultHuman = 'Spieler ' + (index + 1);
@@ -287,7 +435,7 @@
     const validPlayer = p => p && typeof p.name === 'string' && p.name.length > 0 && p.name.length <= 40 &&
       (p.type === 'human' || (p.type === 'cpu' && !!DIFFICULTIES[p.difficulty])) &&
       finitePoints(p.total) && finitePoints(p.bank);
-    return !!snapshot && [2, 3, 4, 5, SAVE_VERSION].includes(snapshot.version) &&
+    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, SAVE_VERSION].includes(snapshot.version) &&
       (snapshot.phase !== 'revealing' || (
         ALL_KEYS.includes(snapshot.revealLetter) &&
         Number.isInteger(snapshot.revealIndex) && snapshot.revealIndex >= 0 &&
@@ -299,11 +447,12 @@
       typeof snapshot.phrase === 'string' && snapshot.phrase.length >= 4 &&
       typeof snapshot.category === 'string' && Array.isArray(snapshot.used) &&
       snapshot.used.every(isLetter) && typeof snapshot.outcomes === 'object' && snapshot.outcomes !== null &&
-      ['idle', 'spinning', 'consonant', 'vowel', 'handover', 'solved', 'revealing'].includes(snapshot.phase) &&
+      ['idle', 'intro', 'spinning', 'consonant', 'vowel', 'handover', 'solved', 'revealing'].includes(snapshot.phase) &&
       Number.isFinite(snapshot.wheelAngle) &&
+      (snapshot.version < 10 || validSectorEffects(snapshot.sectorEffects, snapshot.round)) &&
       (snapshot.phase !== 'spinning' ||
         (Number.isInteger(snapshot.pendingSpinSector) && snapshot.pendingSpinSector >= 0 &&
-         snapshot.pendingSpinSector < SECTORS.length && Number.isFinite(snapshot.pendingSpinAngle))) &&
+         snapshot.pendingSpinSector < BASE_SECTORS.length && Number.isFinite(snapshot.pendingSpinAngle))) &&
       (snapshot.phase !== 'handover' || ['finish', 'next-player'].includes(snapshot.pendingTransition)) &&
       (snapshot.phase !== 'solved' ||
         (Number.isInteger(snapshot.endRoundWinner) && snapshot.endRoundWinner >= 0 && snapshot.endRoundWinner < 3 && finitePoints(snapshot.endRoundPrize)));
@@ -336,8 +485,10 @@
         version: SAVE_VERSION,
         savedAt: new Date().toISOString(),
         soundOn,
+        fairyId: game.fairyId,
         players: game.players.map(p => ({ ...p })),
         round: game.round,
+        sectorEffects: game.sectorEffects.slice(),
         deck: game.deck.map(p => ({ ...p })),
         previousCategory: game.previousCategory,
         current: game.current,
@@ -398,6 +549,7 @@
       // Das Show-Menue pausiert Timer, Computerzuege und Radanimation.
       stopPending();
       setConfigFromPlayers(game.players);
+      setFairySelection(game.fairyId);
     }
     $('setupClose').hidden = !game;
     refreshResumePanel();
@@ -432,7 +584,9 @@
     $('wheelDisc').style.transform = 'rotate(0deg)';
     game = {
       players: configuredPlayers(),
+      fairyId: fairy.setVariant($('fairySelect').value),
       round: 0,
+      sectorEffects: Array(BASE_SECTORS.length).fill(null),
       deck: shuffled(words),
       previousCategory: '',
       current: 0,
@@ -474,6 +628,23 @@
       used: new Set(snapshot.used),
       outcomes: { ...snapshot.outcomes }
     };
+    // Alte v10- und fruehere Spielstaende benutzen die bisherige Sonya-Fee.
+    // Nicht mehr registrierte Feen werden ebenfalls sicher auf Sonya gesetzt.
+    game.fairyId = fairy.setVariant(snapshot.fairyId || fairy.defaultVariant());
+    setFairySelection(game.fairyId);
+    if (snapshot.version < 10) {
+      // Alte feste Bankrott-/Aussetzen-Positionen werden beim Fortsetzen
+      // durch die neue Verteilung dieser Runde ersetzt.
+      game.sectorEffects = createRoundSectorEffects(game.round);
+      if (game.phase === 'spinning') {
+        // Ein alter noch laufender Dreh kann nicht auf einem geaenderten Rad landen.
+        game.phase = 'idle';
+        game.pendingSpinSector = null;
+        game.pendingSpinAngle = null;
+        game.status = 'Neues Rad für Runde ' + game.round + ': Bitte erneut drehen.';
+      }
+    }
+    applyRoundSectors();
     wheelAngle = snapshot.wheelAngle;
     soundOn = snapshot.soundOn !== false;
     refreshSoundButton();
@@ -491,14 +662,16 @@
 
   function restorePendingAction() {
     if (!game) return;
-    if (game.phase === 'spinning') {
+    if (game.phase === 'intro') {
+      beginWheelIntroduction();
+    } else if (game.phase === 'spinning') {
       // Ein bereits ausgeloster Dreh wird nicht noch einmal ausgewuerfelt.
-      const sector = SECTORS[game.pendingSpinSector];
+      const sector = wheelSectors[game.pendingSpinSector];
       wheelAngle = game.pendingSpinAngle;
       $('wheelDisc').style.transform = 'rotate(' + wheelAngle + 'deg)';
       handleSpinResult(sector);
     } else if (game.phase === 'revealing') {
-      runRevealSequence();
+      startRevealSequence();
     } else if (game.phase === 'handover') {
       if (game.pendingTransition === 'finish') finishRound(game.current);
       else advanceTurn();
@@ -523,13 +696,15 @@
   function startRound() {
     if (!game || game.round >= ROUNDS) return;
     game.round++;
+    game.sectorEffects = createRoundSectorEffects(game.round);
+    applyRoundSectors();
     const puzzle = choosePuzzle();
     game.phrase = puzzle.text;
     game.category = puzzle.category;
     game.used = new Set();
     game.outcomes = {};
     game.current = (game.round - 1) % 3;
-    game.phase = 'idle';
+    game.phase = 'intro';
     game.value = null;
     game.landed = null;
     game.pendingSpinSector = null;
@@ -538,68 +713,136 @@
     game.revealLetter = null;
     game.revealIndex = 0;
     game.players.forEach(p => { p.bank = 0; });
-    game.status = 'Drehe das Rad und sammle Punkte!';
+    game.status = 'Runde ' + game.round + ': Die Sonderfelder auf dem Rad werden vorgestellt!';
     buildBoard();
     sizeBoardTiles();
     updateBoard();
     fairy.home();
     render();
-    maybeComputerTurn();
+    beginWheelIntroduction();
   }
 
+  // Maximal zwölf Tile-Positionen nebeneinander: komplette Wörter bleiben
+  // zusammen, sofern sie in eine Zeile passen. Längere Wörter werden nach
+  // zwölf Zeichen weitergeführt; die DOM-Reihenfolge bleibt die Leserichtung.
+  const MAX_TILES_PER_LINE = 12;
   function buildBoard() {
     const board = $('puzzleBoard');
     const fee = $('feeCharacter');
     board.replaceChildren();
-    const tokens = game.phrase.match(/\S+|\s+/g) || [];
-    for (const token of tokens) {
+    const lines = document.createElement('div');
+    lines.className = 'puzzle-lines';
+    board.appendChild(lines);
+    let line = null;
+    let occupied = 0;
+    const newLine = () => {
+      line = document.createElement('div');
+      line.className = 'puzzle-line';
+      lines.appendChild(line);
+      occupied = 0;
+    };
+    const addWord = characters => {
       const word = document.createElement('div');
       word.className = 'word';
-      if (/^\s+$/.test(token)) {
-        word.classList.add('space-group');
-        for (let i = 0; i < token.length; i++) {
-          const spaceTile = document.createElement('span');
-          spaceTile.className = 'tile space-tile';
-          spaceTile.setAttribute('aria-hidden', 'true');
-          word.appendChild(spaceTile);
+      for (const character of characters) {
+        const tile = document.createElement('span');
+        if (isLetter(character)) {
+          tile.className = 'tile';
+          tile.dataset.letter = character;
+          tile.setAttribute('aria-label', 'Verdeckter Buchstabe');
+          const inner = document.createElement('span');
+          inner.className = 'tile-letter';
+          inner.textContent = character;
+          inner.setAttribute('aria-hidden', 'true');
+          tile.appendChild(inner);
+        } else {
+          tile.className = 'tile revealed static-tile';
+          tile.textContent = character;
+          tile.setAttribute('aria-label', 'Sonderzeichen ' + character);
         }
-      } else {
-        for (const character of token) {
-          const tile = document.createElement('span');
-          if (isLetter(character)) {
-            tile.className = 'tile';
-            tile.dataset.letter = character;
-            tile.setAttribute('aria-label', 'Verdeckter Buchstabe');
-            const inner = document.createElement('span');
-            inner.className = 'tile-letter';
-            inner.textContent = character;
-            inner.setAttribute('aria-hidden', 'true');
-            tile.appendChild(inner);
-          } else {
-            tile.className = 'tile revealed static-tile';
-            tile.textContent = character;
-            tile.setAttribute('aria-label', 'Sonderzeichen ' + character);
-          }
-          word.appendChild(tile);
-        }
+        word.appendChild(tile);
       }
-      board.appendChild(word);
+      line.appendChild(word);
+      occupied += characters.length;
+    };
+    const addSpace = count => {
+      const group = document.createElement('div');
+      group.className = 'word space-group';
+      for (let i = 0; i < count; i++) {
+        const tile = document.createElement('span');
+        tile.className = 'tile space-tile';
+        tile.setAttribute('aria-hidden', 'true');
+        group.appendChild(tile);
+      }
+      line.appendChild(group);
+      occupied += count;
+    };
+    newLine();
+    let pendingSpaces = 0;
+    for (const token of game.phrase.match(/\S+|\s+/g) || []) {
+      if (/^\s+$/.test(token)) { pendingSpaces += [...token].length; continue; }
+      const letters = [...token];
+      // Nie ein teilbares Wort am Ende der Zeile zerreißen, wenn es in der
+      // nächsten Zeile komplett Platz hat.
+      if (occupied && occupied + pendingSpaces + letters.length > MAX_TILES_PER_LINE) {
+        newLine();
+        pendingSpaces = 0;
+      }
+      while (letters.length) {
+        const spaces = occupied ? Math.min(pendingSpaces, MAX_TILES_PER_LINE - occupied) : 0;
+        if (occupied && occupied + spaces >= MAX_TILES_PER_LINE) {
+          newLine();
+          pendingSpaces = 0;
+          continue;
+        }
+        if (spaces) addSpace(spaces);
+        pendingSpaces = 0;
+        // Überlange Einzelwörter gleichmäßig verteilen, statt einen
+        // einzelnen Buchstaben in der letzten Zeile stehen zu lassen.
+        const minSegments = Math.ceil(letters.length / MAX_TILES_PER_LINE);
+        const balanced = occupied === 0 && minSegments > 1
+          ? Math.ceil(letters.length / minSegments) : letters.length;
+        const amount = Math.min(balanced, MAX_TILES_PER_LINE - occupied);
+        addWord(letters.splice(0, amount));
+        if (letters.length) newLine();
+      }
     }
-    // Die Fee ist absolut positioniert, nimmt keinen Platz im Flex-Tile-Raster ein.
+    // Viele Zeilen erhalten auf kleinen Bildschirmen kompaktere Feldhöhen,
+    // damit alle Buchstaben innerhalb des Hintergrund-Displays bleiben.
+    board.classList.toggle('many-lines', lines.children.length >= 4);
+    board.classList.toggle('dense-lines', lines.children.length >= 5);
+    // Der absolut positionierte Sprite ist kein Teil des Zeilenrasters.
     board.appendChild(fee);
   }
   function sizeBoardTiles() {
     if (!game) return;
     const board = $('puzzleBoard');
-    const longest = Math.max(1, ...game.phrase.split(/\s+/).map(word => word.length));
+    const lines = [...board.querySelectorAll('.puzzle-line')];
+    if (!lines.length) return;
     const viewport = window.innerWidth;
-    const gap = viewport <= 440 ? 3 : 4;
     const natural = viewport <= 440 ? Math.min(27, Math.max(19, viewport * .064))
       : viewport <= 760 ? Math.min(34, viewport * .052) : Math.min(38, viewport * .032);
     const style = getComputedStyle(board);
-    const innerWidth = board.clientWidth - parseFloat(style.paddingLeft || 0) - parseFloat(style.paddingRight || 0);
-    const fit = (innerWidth - 10 - (longest - 1) * gap) / longest;
-    board.style.setProperty('--tile-size', Math.max(12, Math.min(natural, fit)).toFixed(2) + 'px');
+    const innerWidth = Math.max(60, board.clientWidth - parseFloat(style.paddingLeft || 0)
+      - parseFloat(style.paddingRight || 0) - 4);
+    // Tile-Breiten sind proportional zur Sprite-Größe. Die Abstände bleiben
+    // in Pixeln konstant. Rechnen statt wiederholt messen: Browser liefern
+    // unmittelbar nach einer Änderung der CSS-Variablen teils alte Rects.
+    let target = natural;
+    for (const line of lines) {
+      const groups = [...line.children];
+      const lineGap = parseFloat(getComputedStyle(line).columnGap) || 0;
+      let fixed = Math.max(0, groups.length - 1) * lineGap;
+      let proportional = 0;
+      for (const group of groups) {
+        const tiles = [...group.querySelectorAll('.tile')];
+        const gap = parseFloat(getComputedStyle(group).columnGap) || 0;
+        fixed += Math.max(0, tiles.length - 1) * gap;
+        for (const tile of tiles) proportional += tile.classList.contains('space-tile') ? .72 : 1;
+      }
+      if (proportional > 0) target = Math.min(target, (innerWidth - fixed) / proportional);
+    }
+    board.style.setProperty('--tile-size', Math.max(12, target).toFixed(2) + 'px');
   }
   function hiddenCount() {
     return [...game.phrase].filter(char => isLetter(char) && !game.used.has(char)).length;
@@ -627,6 +870,34 @@
     });
   }
 
+  // Beim richtigen Tipp beginnt eine leuchtende Kettenreaktion in Leserichtung.
+  // Sobald die erste Kachel sichtbar leuchtet, laeuft die Fee zu ihr; die
+  // uebrigen Treffer leuchten waehrenddessen in derselben Reihenfolge auf.
+  // Nach einem Reload beginnt die Beleuchtung bei der naechsten offenen Kachel.
+  function startRevealSequence() {
+    if (!game || game.phase !== 'revealing') return;
+    const letter = game.revealLetter;
+    const first = game.revealIndex;
+    const matches = [...$('puzzleBoard').querySelectorAll('[data-letter]')]
+      .filter(tile => tile.dataset.letter === letter);
+    if (first >= matches.length) { runRevealSequence(); return; }
+    const interval = prefersReducedMotion ? 70 : 225;
+    matches.slice(first).forEach((tile, relativeIndex) => {
+      later(() => {
+        if (!game || game.phase !== 'revealing' || game.revealLetter !== letter ||
+            !tile.isConnected || tile.classList.contains('revealed')) return;
+        tile.classList.add('tile-lit');
+        // Genau ein Bing pro Treffer, passend zum Aufleuchten (nicht erneut beim Umdrehen).
+        sound('bing');
+      }, relativeIndex * interval);
+    });
+    // Die erste Kachel leuchtet vor dem ersten Gehschritt auf. Waehrend die
+    // Fee unterwegs ist, leuchten die weiteren Kacheln automatisch auf.
+    later(() => {
+      if (game && game.phase === 'revealing' && game.revealLetter === letter) runRevealSequence();
+    }, prefersReducedMotion ? 45 : 120);
+  }
+
   function runRevealSequence() {
     if (!game || game.phase !== 'revealing') return;
     const letter = game.revealLetter;
@@ -649,8 +920,7 @@
     const tile = matches[current];
     fairy.walkToTile(tile, pose => {
       if (!game || game.phase !== 'revealing' || game.revealLetter !== letter) return;
-      // Pro Treffer genau ein Bing; der Buchstabe leuchtet bis zur Umdrehung.
-      sound('bing');
+      // Die Kachel leuchtet bereits seit der vorgelagerten Trefferanzeige.
       fairy.turnTile(tile, pose, () => {
         if (!game || game.phase !== 'revealing' || game.revealLetter !== letter) return;
         game.revealIndex = current + 1;
@@ -700,8 +970,9 @@
     } else {
       $('keyboardPrompt').textContent = 'BUCHSTABEN WÄHLEN';
     }
-    $('wheelText').textContent = game.phase === 'spinning'
-      ? 'DAS GLÜCKSRAD DREHT SICH ...'
+    $('wheelText').textContent = game.phase === 'intro'
+      ? 'RUNDE ' + game.round + ': SONDERFELDER LEUCHTEN AUF ...'
+      : game.phase === 'spinning' ? 'DAS GLÜCKSRAD DREHT SICH ...'
       : game.landed ? 'LETZTER DREH: ' + game.landed : 'DEIN NÄCHSTER DREH WARTET';
     document.querySelector('.wheel-card').classList.toggle('spinning', game.phase === 'spinning');
     const expected = game.phase === 'consonant' ? 'consonant' : game.phase === 'vowel' ? 'vowel' : 'none';
@@ -725,8 +996,8 @@
 
   function spinWheel() {
     if (!game || game.phase !== 'idle') return;
-    const sectorIndex = Math.floor(Math.random() * SECTORS.length);
-    const sector = SECTORS[sectorIndex];
+    const sectorIndex = Math.floor(Math.random() * wheelSectors.length);
+    const sector = wheelSectors[sectorIndex];
     const token = runToken;
     const wobble = (Math.random() - .5) * STEP * .60;
     const desired = ((360 - sectorIndex * STEP + wobble) % 360 + 360) % 360;
@@ -772,7 +1043,7 @@
     if (!game) return;
     game.pendingSpinSector = null;
     game.pendingSpinAngle = null;
-    game.landed = sector.effect === 'bankrupt' ? 'BANKROTT' : sector.effect === 'skip' ? 'AUSSETZEN' : number(sector.points) + ' PUNKTE';
+    game.landed = sector.effect === 'bankrupt' ? 'BANKROTT' : sector.effect === 'skip' ? 'AUSSETZEN' : sector.effect === 'extra' ? 'EXTRADREH' : number(sector.points) + ' PUNKTE';
     if (sector.effect === 'bankrupt') {
       player().bank = 0;
       sound('bankrupt');
@@ -782,6 +1053,15 @@
     if (sector.effect === 'skip') {
       sound('miss');
       passTurn('AUSSETZEN! Der nächste Spieler ist dran.');
+      return;
+    }
+    if (sector.effect === 'extra') {
+      game.value = null;
+      game.phase = 'idle';
+      game.status = 'EXTRADREH! ' + player().name + ' darf direkt noch einmal drehen.';
+      sound('hit');
+      render();
+      maybeComputerTurn();
       return;
     }
     game.value = sector.points;
@@ -826,7 +1106,7 @@
       game.revealIndex = 0;
       game.phase = 'revealing';
       render();
-      runRevealSequence();
+      startRevealSequence();
     } else {
       sound('miss');
       updateBoard();
@@ -1065,6 +1345,7 @@
     for (let i = 0; i < 3; i++) {
       $('type' + i).addEventListener('change', () => playerTypeChanged(i));
     }
+    $('fairySelect').addEventListener('change', () => setFairySelection($('fairySelect').value));
     $('startBtn').addEventListener('click', newGame);
     $('resumeBtn').addEventListener('click', resumeGame);
     $('scoreMenuBtn').addEventListener('click', toggleScoreMenu);
@@ -1090,11 +1371,14 @@
   function init() {
     drawWheel();
     buildKeyboard();
+    setupFairyOptions();
+    fairy.setVariant(fairy.defaultVariant());
     bindEvents();
     refreshSoundButton();
     const saved = readSavedGame();
     if (saved) {
       setConfigFromPlayers(saved.players);
+      setFairySelection(saved.fairyId || fairy.defaultVariant());
       soundOn = saved.soundOn !== false;
       refreshSoundButton();
     }

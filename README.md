@@ -1,63 +1,103 @@
-# Glücksrad – Retro Edition v6
+# Glücksrad – Retro Edition v13
 
-Ein eigenständiges, mobilfreundliches HTML-Buchstabenspiel im Stil einer 90er-TV-Show. Drei frei konfigurierbare Spielerplätze, Computergegner in drei Schwierigkeitsstufen, animierte Buchstabenwand, Sounds, eigenes Rätselarchiv und automatische Spielstand-Speicherung. Die Umsetzung ist keine offizielle Ausgabe der Fernsehsendung.
+Ein eigenständiges, offline spielbares HTML-Buchstabenspiel im Stil einer 90er-TV-Show. Drei frei konfigurierbare Spielerplätze, Computergegner in drei Schwierigkeitsstufen, animierte Buchstabenwand, Sounds, eigenes Rätselarchiv und automatische Spielstand-Speicherung. Keine offizielle Ausgabe der Fernsehsendung.
 
 ## Starten
 
-1. `gluecksrad-v6.zip` entpacken.
-2. Alle enthaltenen Dateien zusammen in einem Ordner belassen.
-3. `index.html` im Browser öffnen. Keine Internetverbindung und keine Installation nötig.
-4. Für jeden der drei Plätze den Typ (**Spieler**, **Computer Leicht/Mittel/Schwer**) und einen Namen festlegen.
-5. **SHOW STARTEN** beginnt eine Partie, **SHOW FORTSETZEN** lädt eine gespeicherte Partie.
+1. `gluecksrad-v13.zip` entpacken.
+2. Alle enthaltenen Dateien im Ordner `gluecksrad-v13` zusammen belassen.
+3. `index.html` im Browser öffnen. Es sind keine Installation und keine Internetverbindung erforderlich.
+4. Spieler 1 ist standardmäßig **Spieler**, Spieler 2 und 3 sind standardmäßig **Computer Leicht**. Die Spielertypen und Namen können angepasst werden. Die Felder enthalten keine zusätzlichen sichtbaren Labels, bleiben aber für Screenreader beschriftet.
+5. Die gewünschte **Buchstabenfee** auswählen (Standard: Sonya Kraus; zusätzlich Marin Gilzer). **SHOW STARTEN** beginnt die Partie; **SHOW FORTSETZEN** lädt eine gespeicherte Partie mit ihrer eigenen Fee.
 
-## Neu in v6: die Buchstabenfee
+## Neu in v13
 
-Aus dem mitgelieferten 18-Frame-Spritesheet und der HTML-Demo wurde ein optimierter, transparenter Animationsatlas erzeugt.
+- **Buchstabenfee nähert sich den Kacheln:** Beim Herangehen zum Aufdecken eines Buchstabens liegt die Zielposition rund **20 px näher** an der Kachel als in v12. Die Anpassung gilt für Sonya Kraus und Marin Gilzer auf allen Bildschirmgrößen. Die Ruheposition auf der Treppe, die Greifposen und das Offscreen-Verhalten bleiben unverändert.
+- **Spielstände:** v13 speichert unter Version 13 und kann vorhandene Spielstände einschließlich v12 laden.
 
-- **Grundhaltung:** Die Buchstabenfee steht zunächst am linken Rand der Buchstabenwand.
-- **Treffer:** Die Fee geht zur nächsten getroffenen Buchstaben-Kachel, orientiert sich passend zum Ziel und greift mit einer oberen, mittleren oder unteren Handbewegung.
-- **Bing & Licht:** Sobald sie bei der Kachel ankommt, leuchtet genau diese Kachel goldgelb auf. Gleichzeitig erklingt **ein Bing**. Erst dann dreht die Fee die Kachel um, sodass der Buchstabe erscheint.
-- **Lesereihenfolge:** Bei mehrfach vorhandenen Buchstaben geht die Fee die Fundstellen von links nach rechts und von Wort zu Wort durch. Jede Kachel bekommt ihren eigenen Bing und ihre eigene Umdrehung.
-- **Rückkehr:** Nach dem letzten Treffer geht die Fee zum **näheren sichtbaren Rand**, klatscht etwa 2,4 Sekunden und kehrt in ihre Grundhaltung zurück.
-- **Richtig gelöst:** Bei einer korrekt gelösten Runde klatscht und hüpft die Fee etwa drei Sekunden lang. Die Ergebnisanzeige erscheint danach.
-- **Spielablauf:** Während der Trefferanimation sind weitere Eingaben gesperrt. Auch Computergegner warten, bis die Fee ihre Vorführung beendet hat.
+## Bisherige Änderungen (v12)
 
-Die Einzelbilder stammen aus der vom Benutzer bereitgestellten Originalgrafik. Der Animationsatlas nutzt die 18 einzeln zugeschnittenen Posen aus der mitgelieferten Demo:
+- **Kleinere Buchstabenfee:** Auf großen Bildschirmen beträgt die maximale Höhe jetzt ca. **320 px** statt 370 px. Die Körpermitte, Posen und Greifanimationen gelten unverändert für beide Feen. Auf Smartphones bleiben die kompakteren Größen und das Offscreen-Verhalten erhalten.
+- **Höherer Stand:** Die Fee steht auf allen Bildschirmgrößen mit **`bottom: 10%`** statt `5%` innerhalb der Buchstabenwand, also etwa eine Treppenstufe höher.
+- **Spielertyp-Auswahl mit Kontrast:** Die geschlossene Auswahl hat weiterhin eine dunkle Oberfläche mit heller Schrift. Die aufklappbaren Optionen verwenden explizit **dunkle Schrift auf hellem Hintergrund** – auch bei einem hellen Betriebssystem-Theme.
+- **Startwerte:** **Spieler 1 = Spieler**, **Spieler 2 = Computer Leicht**, **Spieler 3 = Computer Leicht**; die dazu passenden Startnamen sind `Spieler 1`, `CPU 2`, `CPU 3`. Bereits gespeicherte Konfigurationen werden beim Laden weiterhin übernommen.
+- **Spielstände:** v12 speichert unter Version 12; alle bisherigen Spielstände bis einschließlich v11 bleiben lesbar.
+
+## Bisherige Änderungen (v11)
+
+- **Zwei Buchstabenfeen:** Sonya Kraus trägt das bisherige hellblaue Kleid, Marin Gilzer das neue rote Kleid. Das Marin-Spritesheet wurde in denselben 18 Posen auf einen körpermittig ausgerichteten 6 × 3-Atlas gebracht. Beide benutzen dieselben Geh-, Greif-, Klatsch- und Siegesanimationen.
+- **Auswahl im Startmenü:** Unter den drei Spielerplätzen steht die Buchstabenfee-Auswahl mit Vorschau. Standardwert ist **Sonya Kraus**. Die Wörter `TYP` und `NAME` über den Eingabefeldern wurden entfernt; die Steuerelemente behalten ihre barrierefreien Namen.
+- **Erweiterbare Feen:** In der neuen Datei `feen.js` werden Name und Atlas-Datei für jede Fee als einfaches JavaScript-Objekt registriert. Zusätzliche Einträge erscheinen automatisch im Auswahlmenü; Spiel- und Animationscode brauchen dafür nicht geändert zu werden.
+- **Spielstände:** v11 speichert die gewählte Fee in `fairyId`. Beim Fortsetzen wird sie wiederhergestellt. Spielstände von **v2 bis v10** bleiben lesbar und verwenden standardmäßig Sonya Kraus. Auch wenn eine eigene Fee später entfernt wird, kann die gespeicherte Show mit der Standardfee fortgesetzt werden.
+
+## Weitere Feen selbst hinzufügen
+
+1. Ein transparentes Sprite-Sheet mit **6 Spalten und 3 Reihen** vorbereiten. Die 18 Posen und ihre Reihenfolge müssen dem vorhandenen Atlas entsprechen. Empfohlen sind **1800 × 1050 px**, also **300 × 350 px pro Pose**, mit einheitlicher Körpermitte und transparenten Rändern. Die Dateien `buchstabenfee-atlas.webp` und `buchstabenfee-marin-atlas.webp` können als Vorlage dienen.
+2. Das Sprite-Sheet als z. B. `meine-fee.webp` in den Spielordner legen.
+3. In **`feen.js`** innerhalb von `window.GLUECKSRAD_FEEN` folgenden Eintrag ergänzen:
+
+```javascript
+meineFee: {
+  name: 'Meine Buchstabenfee',
+  atlas: 'meine-fee.webp'
+},
+```
+
+Nach dem Neuladen erscheint die neue Fee automatisch im Startmenü. Eine registrierte Fee bleibt während einer laufenden Show aktiv, auch wenn das Menü geöffnet wird. Ein Wechsel gilt für eine **neue Show**, nicht rückwirkend für die gespeicherte Partie.
+
+## Bisherige Änderungen (v10)
+
+- **Rundenspezifische Sonderfelder:** Die 18 Felder des Rades werden bei Beginn jeder Runde neu belegt. **Aussetzen** erscheint in jeder Runde genau einmal. **Bankrott** und **Extradreh** variieren entsprechend der folgenden Tabelle. Wo eine Spanne angegeben ist, wird ihre konkrete Anzahl zufällig ausgelost.
+
+  | Runde | Bankrott | Aussetzen | Extradreh |
+  |---|---:|---:|---:|
+  | 1 | 0 | 1 | 0 |
+  | 2 | 0 | 1 | 1 |
+  | 3 | 0–1 | 1 | 0–1 |
+  | 4 | 1 | 1 | 1 |
+  | 5 | 1–2 | 1 | 1–2 |
+
+- **Vorstellung der Sonderfelder:** Beim Rundenstart scrollt das Rad bei Bedarf in den sichtbaren Bereich. Jedes vorhandene Sonderfeld wird anschließend einzeln goldgelb zum Leuchten gebracht und etwa 30 % vergrößert. Solange die Vorstellung läuft, kann nicht gedreht werden. Unter dem Rad stehen Anzahl und Art der Sonderfelder dauerhaft als Legende. Bei aktivierter Einstellung **Bewegung reduzieren** ist die Animation verkürzt.
+- **Extradreh:** Ein Treffer auf **EXTRADREH** gibt demselben Spieler sofort einen weiteren Dreh. Er erhält dabei keine Punkte und muss keinen Buchstaben wählen. Das gilt auch für Computergegner.
+- **Spielstände:** Die zufällig bestimmte Sonderfeldverteilung ist Teil des v10-Spielstands und bleibt nach dem Fortsetzen erhalten. v9 und ältere Spielstände werden auf eine passende Verteilung für die aktuelle Runde umgestellt. Ein beim Versionswechsel noch laufender alter Dreh wird aus Fairnessgründen zurückgesetzt.
+- **Buchstabenfee:** Die nach v9 bereitgestellte Korrektur der Greifanimation wurde übernommen: zum Aufdecken wird die Hand pro Buchstabe nur einmal ausgestreckt.
+
+## Bisherige Änderungen (v9)
+
+- **Maximal zwölf Tiles pro Zeile:** Die Buchstabenwand ordnet Treffer, Leerzeichen und Satzzeichen in höchstens zwölf Positionen nebeneinander an. Ganze Wörter werden, wenn möglich, gemeinsam umgebrochen; Wörter mit mehr als zwölf Zeichen laufen über mehrere Zeilen weiter. Bei vielen Zeilen werden die Felder auf schmalen Ansichten etwas niedriger, damit sie im Display bleiben. Auf großen Monitoren bleiben rechts und links mehr freie Flächen.
+- **Linke Ruheposition 90 px:** Die Fee ruht auf nicht beschnittenen Bühnen etwa 90 px vom linken Rand (statt ca. 159 px). Die Position rechts ist entsprechend symmetrisch. Auf beschnittenen Mobilansichten bleibt die Offscreen-Ruheposition bestehen.
+- **Greifhöhe korrigiert:** Die Handhöhen der drei Sprite-Posen werden nun passend zur tatsächlichen Tile-Mitte ausgewählt; die Fee steht zudem ein wenig tiefer auf der Bühne, damit sie nicht über die Buchstaben greift.
+- **Fee im Vordergrund:** Auf Smartphones wird sie beim Laufen und Aufdecken immer vor den Tiles dargestellt. Die Sprite-Elemente lassen weiterhin alle Maus- und Touch-Interaktionen durch.
+- **Bisherige Funktionen erhalten:** 370 px maximale Feenhöhe, zentrierte 6×3-Sprites, zeitlich gestaffeltes Aufleuchten und Aufdecken in Lesereihenfolge, Offscreen-Abgang und Speicherung bleiben erhalten.
+
+## Animation der Buchstabenfee
+
+Der 6×3-Atlas umfasst weiterhin 18 Posen. Die Nummerierung beginnt bei 0 und erfolgt erst von links nach rechts, dann von oben nach unten.
 
 - Frame 0: Grundhaltung
-- Frames 0–4: Klatschbewegungen
+- Frames 0–4: Klatschen
 - Frames 6–8: nach links gehen
 - Frames 12–14: nach rechts gehen
 - Frames 9–11: nach links greifen (Mitte, Hoch, Tief)
 - Frames 15–17: nach rechts greifen (Mitte, Hoch, Tief)
 
-Bei aktivierter Browser-Einstellung **Bewegung reduzieren** werden die zeitintensiven Übergänge stark verkürzt.
+Bei einem richtigen Tipp leuchten die betreffenden Kacheln in Leserichtung nacheinander goldgelb auf. Nach der ersten Kachel geht die Fee los, während die übrigen Kacheln nach und nach aufleuchten. Jede Kachel klingelt beim Aufleuchten einmal. Die Fee deckt die Treffer danach in der gleichen Leserichtung einzeln auf. Währenddessen bleiben Eingaben gesperrt, auch Computergegner warten. Bei einer korrekt gelösten Runde feiert die Fee vor der Ergebnisanzeige.
+
+Die Browser-Einstellung **Bewegung reduzieren** verkürzt Animationen stark.
 
 ## Speichern und fortsetzen
 
-Der Spielstand wird als JSON-String unter `localStorage.gluecksradGame` gespeichert. Version 6 speichert zusätzlich:
+Der Spielstand wird unter `localStorage.gluecksradGame` als JSON gespeichert. Eine aufgedeckte Buchstabenserie wird mit `phase: "revealing"`, `revealLetter` und `revealIndex` fortsetzbar gespeichert. Wird die Show während des Aufdeckens unterbrochen, setzt v13 bei der nächsten noch geschlossenen Kachel fort. Spieler, gewählte Buchstabenfee, Punkte, Radwinkel, Rätselreihenfolge, Sonderfeldverteilung und der Computerzug bleiben erhalten.
 
-```json
-{
-  "version": 6,
-  "phase": "revealing",
-  "revealLetter": "N",
-  "revealIndex": 1
-}
-```
+Die Speicherdaten hängen vom jeweiligen Browser und von der Website-Adresse ab. Bei `file://` kann die Verfügbarkeit von `localStorage` je nach Browser unterschiedlich sein. Für zuverlässige dauerhafte Spielstände kann das Spiel über eine konstante lokale oder gehostete Webadresse geöffnet werden.
 
-`revealIndex` zählt die bereits umgedrehten Kacheln des gerade bearbeiteten Buchstabens. Wird das Menü während der Bewegung geöffnet oder der Browser unterbrochen, geht die Animation nach **SHOW FORTSETZEN** bei der nächsten noch offenen Fundstelle weiter. Bereits aufgedeckte Kacheln werden nicht erneut gewertet. Die restlichen Daten (Spieler, Punkte, Radwinkel, Rätselreihenfolge, Computerzug usw.) bleiben wie in v5 gespeichert.
-
-**Spielstände aus v2 bis v5 werden weiterhin unterstützt.** Der Spielstand ist an den jeweiligen Browser und die Website-Adresse gebunden. Besonders beim Öffnen über `file://` kann die Verfügbarkeit von `localStorage` je nach Browser abweichen. Für verlässliche Speicherstände kann das Spiel über eine feste lokale oder gehostete Webadresse geöffnet werden.
-
-Zum Überprüfen:
+Spielstand prüfen:
 
 ```javascript
-const spielstand = JSON.parse(localStorage.gluecksradGame);
-console.log(spielstand.phase, spielstand.revealLetter, spielstand.revealIndex);
+console.log(JSON.parse(localStorage.gluecksradGame));
 ```
 
-Zum Löschen:
+Spielstand löschen:
 
 ```javascript
 localStorage.removeItem('gluecksradGame');
@@ -67,27 +107,30 @@ localStorage.removeItem('gluecksradGame');
 
 | Datei | Zweck |
 |---|---|
-| `index.html` | Mobilfreundliche Spieloberfläche |
-| `styles.css` | TV-Bühnendesign, Kachelglanz, Umdrehungen, Fee-Sprünge |
-| `spiel.js` | Spielregeln, CPU, Runden, Sounds, Speichern, Treffer-Reihenfolge |
-| `buchstabenfee.js` | Geh-, Greif-, Klatsch- und Sprungabläufe, Positionierung, Abbruch |
-| `buchstabenfee-atlas.webp` | 18 transparante Sprites als kompaktes 6×3-Atlasbild |
-| `buchstabenfee-original.png` | Original-Spritesheet aus dem Anhang zur eigenen Bearbeitung |
-| `buchstabenwand.png` | Goldene TV-Show-Bühne als Hintergrund |
-| `woerter.js` | Externe, frei bearbeitbare Wörter- und Kategorienliste |
+| `index.html` | Spieloberfläche und Feenauswahl im Startmenü |
+| `styles.css` | Bühnendesign, Kacheln, mobile Darstellung, Sprites |
+| `spiel.js` | Spielregeln, CPU, Runden, Sounds, Speicherstände |
+| `buchstabenfee.js` | Geh-, Greif-, Klatsch- und Sprungabläufe, Offscreen-Ausgang, Wechsel zwischen Sprite-Varianten |
+| `feen.js` | **Erweiterbare JS-Objekte für Namen und Atlas-Dateien der Feen** |
+| `buchstabenfee-atlas.webp` | Sonya Kraus (hellblau): 1800 × 1050, 6×3 Frames à 300 × 350 |
+| `buchstabenfee-marin-atlas.webp` | Marin Gilzer (rot): ausgerichteter 1800 × 1050-Atlas, 6×3 Frames à 300 × 350 |
+| `buchstabenfee-marin-quelle.png` | Vom Nutzer bereitgestelltes Original-Spritesheet von Marin Gilzer |
+| `buchstabenfee-quelle.webp` | Unverändertes neues 18-Posen-Spritesheet zur Bearbeitung |
+| `buchstabenwand.webp` | Neue goldene Buchstabenwand |
+| `woerter.js` | Frei bearbeitbare Wörter und Kategorien |
 | `README.md` | Diese Anleitung |
 
 ## Eigene Rätsel hinzufügen
 
-In `woerter.js` können weitere Einträge in `window.GLUECKSRAD_WOERTER` stehen:
+In `woerter.js` weitere Einträge zu `window.GLUECKSRAD_WOERTER` hinzufügen:
 
 ```javascript
 { kategorie: "Sprichwort", text: "Aller Anfang ist schwer" },
 { kategorie: "Mein Thema", text: "Mein eigener Begriff" },
 ```
 
-Mindestens fünf Rätsel werden benötigt. Umlaute sind möglich; `ß` wird zu `SS` normalisiert. Leerzeichen werden als transparente Kacheln, Sonderzeichen bereits aufgedeckt dargestellt. Fünf Runden werden pro Partie gespielt.
+Mindestens fünf Rätsel werden benötigt. Umlaute werden unterstützt, `ß` wird zu `SS` normalisiert. Leerzeichen bleiben transparente Kacheln, Sonderzeichen sind direkt aufgedeckt. Pro Partie werden fünf Runden gespielt.
 
 ## Sounds
 
-Das Rad, die Trefferglocke, Bankrott und die Gewinnfanfare werden ohne externe Audiodateien über die Web-Audio-API erzeugt. Der Ton lässt sich über das Dropdown-Menü neben dem Scoreboard ausschalten. Auf Smartphones beginnt die Audiowiedergabe gegebenenfalls erst nach einer Touch-Interaktion.
+Rad, Trefferglocke, Bankrott und Gewinnfanfare werden ohne externe Audiodateien über die Web-Audio-API erzeugt. Der Ton lässt sich über das Show-Menü neben dem Scoreboard ausschalten. Auf Smartphones kann Audio erst nach der ersten Berührung starten.

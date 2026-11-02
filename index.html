@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#490c0a">
+  <meta name="description" content="Ein mobilfreundliches Retro-Glücksrad für drei Spieler – lokal oder gegen den Computer, komplett offline spielbar.">
+  <title>Glücksrad – Retro Edition v6</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="background-art" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="app-shell">
+    <main>
+      <div class="scoreboard-bar" id="scoreboardBar">
+        <section class="scoreboard" aria-label="Spielstand">
+          <article class="player-card player-cyan" id="playerCard0">
+            <div class="player-identity"><svg class="player-kind-icon icon-human" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg><svg class="player-kind-icon icon-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg><span class="player-name" id="playerName0">SPIELER 1</span></div>
+            <div class="player-metrics"><div class="player-score" title="Gesamtpunkte"><span id="playerScore0">0</span><small>PKT</small></div><div class="player-bank" title="Rundentopf"><span class="bank-label">Topf</span><strong id="playerBank0">0</strong></div></div>
+          </article>
+          <article class="player-card player-pink" id="playerCard1">
+            <div class="player-identity"><svg class="player-kind-icon icon-human" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg><svg class="player-kind-icon icon-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg><span class="player-name" id="playerName1">SPIELER 2</span></div>
+            <div class="player-metrics"><div class="player-score" title="Gesamtpunkte"><span id="playerScore1">0</span><small>PKT</small></div><div class="player-bank" title="Rundentopf"><span class="bank-label">Topf</span><strong id="playerBank1">0</strong></div></div>
+          </article>
+          <article class="player-card player-yellow" id="playerCard2">
+            <div class="player-identity"><svg class="player-kind-icon icon-human" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg><svg class="player-kind-icon icon-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg><span class="player-name" id="playerName2">SPIELER 3</span></div>
+            <div class="player-metrics"><div class="player-score" title="Gesamtpunkte"><span id="playerScore2">0</span><small>PKT</small></div><div class="player-bank" title="Rundentopf"><span class="bank-label">Topf</span><strong id="playerBank2">0</strong></div></div>
+          </article>
+        </section>
+        <div class="score-menu" id="scoreMenu">
+          <button type="button" class="score-menu-toggle" id="scoreMenuBtn" aria-haspopup="true" aria-label="Spielmenü öffnen" aria-expanded="false" aria-controls="showMenuPanel" title="Spielmenü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div class="show-menu-panel" id="showMenuPanel" aria-label="Spieloptionen" hidden>
+            <div class="show-menu-heading">SHOW-OPTIONEN</div>
+            <button type="button" class="show-menu-action" id="soundBtn" aria-label="Ton ausschalten" aria-pressed="true">
+              <svg class="sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+              <svg class="sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></svg>
+              <span id="soundMenuText">TON AN</span>
+            </button>
+            <button type="button" class="show-menu-action" id="helpBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 0 1 5 1c0 2-2.5 2-2.5 4"/><path d="M12 17h.01"/></svg><span>SPIELREGELN</span></button>
+            <button type="button" class="show-menu-action" id="newGameBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2 6"/><path d="M3 4v7h7"/></svg><span>SHOW-MENÜ</span></button>
+          </div>
+        </div>
+      </div>
+      <section class="board-card" aria-labelledby="boardHeading">
+        <div class="board-header"><h1 id="boardHeading">KATEGORIE</h1><div class="round-pill" id="roundLabel">RUNDE 1 / 5</div></div>
+        <div class="puzzle-board" id="puzzleBoard" aria-label="Rätselbrett"><div class="board-placeholder" aria-hidden="true">? ? ? &nbsp; ? ? ? ?</div><div class="fee-character" id="feeCharacter" aria-hidden="true"><span class="fee-sprite" id="feeSprite"></span></div></div>
+      </section>
+
+      <div class="game-columns">
+        <section class="wheel-card" aria-labelledby="wheelHeading">
+          <div class="section-heading"><div><div class="tiny-label">DREH DEIN GLÜCK</div><h2 id="wheelHeading">DAS RAD</h2></div><div class="glow-mark" aria-hidden="true">✳</div></div>
+          <div class="wheel-stage">
+            <div class="wheel-pointer" aria-hidden="true"></div>
+            <div class="wheel-disc" id="wheelDisc"><canvas id="wheelCanvas" width="600" height="600" aria-label="Glücksrad mit Punktwerten sowie Bankrott und Aussetzen"></canvas></div>
+            <div class="wheel-center" aria-hidden="true"><span>★</span></div>
+          </div>
+          <div class="wheel-foot"><span class="wheel-status-dot"></span><span id="wheelText">DEIN NÄCHSTER DREH WARTET</span></div>
+        </section>
+
+        <section class="controls-card" aria-labelledby="currentPlayerHeading">
+          <div class="turn-title-row"><div><div class="tiny-label" id="turnEyebrow">JETZT AM ZUG</div><h2 id="currentPlayerHeading">SPIELER 1</h2></div><div class="turn-badge" id="turnBadge">DEIN ZUG</div></div>
+          <p class="status-line" id="statusLine" role="status" aria-live="polite">Drehe das Rad und sammle Punkte!</p>
+          <div class="actions">
+            <button type="button" class="button button-spin" id="spinBtn"><span class="button-symbol" aria-hidden="true">✦</span><span>RAD DREHEN</span><span class="button-chevron" aria-hidden="true">›</span></button>
+            <div class="action-secondary"><button type="button" class="button button-vowel" id="vowelBtn">VOKAL <span>−250</span></button><button type="button" class="button button-solve" id="solveBtn">LÖSEN <span aria-hidden="true">↗</span></button></div>
+          </div>
+          <div class="keyboard-header"><span id="keyboardPrompt">BUCHSTABEN WÄHLEN</span><button type="button" id="passBtn" class="pass-button">Zug abgeben</button></div>
+          <div class="keyboard" id="keyboard" aria-label="Buchstabentastatur"></div>
+          <div class="keyboard-legend"><span><b class="legend-dot hit-dot"></b> getroffen</span><span><b class="legend-dot miss-dot"></b> vergeben</span><span><b class="legend-dot vowel-dot"></b> Vokal</span></div>
+        </section>
+      </div>
+    </main>
+    <footer class="footer"><span>✦ RETRO EDITION V6 · MIT BUCHSTABENFEE</span><span id="saveStatus">OHNE ANMELDUNG · AUCH OFFLINE</span></footer>
+  </div>
+
+  <div class="overlay" id="setupOverlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+    <div class="modal setup-modal">
+      <button type="button" class="modal-close" id="setupClose" aria-label="Spielauswahl schließen" hidden>×</button>
+      <div class="modal-topline">✦ WILLKOMMEN IN DER SHOW ✦</div>
+      <div class="modal-hero" aria-hidden="true">★</div>
+      <h2 class="modal-heading" id="setupTitle">DEIN <em>GLÜCKS</em>RAD</h2>
+      <p class="modal-description">Drei Plätze, ein Rad, eine goldene Buchstabenwand. Wer knackt die Rätsel dieser 90er-Show?</p>
+      <div class="resume-panel" id="resumePanel" hidden>
+        <div class="resume-title"><span aria-hidden="true">&#10022;</span> GESPEICHERTE SHOW</div>
+        <p class="resume-summary" id="resumeSummary"></p>
+        <button type="button" class="button resume-button" id="resumeBtn">SHOW FORTSETZEN <span aria-hidden="true">&#8594;</span></button>
+      </div>
+      <div class="field-title config-title">DIE DREI SPIELPL&Auml;TZE</div>
+      <p class="config-hint">F&uuml;r jeden Platz einzeln Mensch oder Computer und Schwierigkeitsgrad festlegen.</p>
+      <div class="player-config-list">
+        <div class="player-config-row player-config-cyan">
+          <span class="config-player-number" aria-hidden="true">1</span>
+          <div class="config-fields">
+            <label for="type0">TYP
+              <select id="type0" class="config-type" aria-label="Typ Spieler 1">
+                <option value="human">Spieler</option>
+                <option value="easy">Computer Leicht</option>
+                <option value="medium">Computer Mittel</option>
+                <option value="hard">Computer Schwer</option>
+              </select>
+            </label>
+            <label for="name0">NAME
+              <input id="name0" type="text" maxlength="14" value="Spieler 1" autocomplete="off" spellcheck="false" aria-label="Name Spieler 1">
+            </label>
+          </div>
+        </div>
+        <div class="player-config-row player-config-pink">
+          <span class="config-player-number" aria-hidden="true">2</span>
+          <div class="config-fields">
+            <label for="type1">TYP
+              <select id="type1" class="config-type" aria-label="Typ Spieler 2">
+                <option value="human">Spieler</option>
+                <option value="easy">Computer Leicht</option>
+                <option value="medium">Computer Mittel</option>
+                <option value="hard">Computer Schwer</option>
+              </select>
+            </label>
+            <label for="name1">NAME
+              <input id="name1" type="text" maxlength="14" value="Spieler 2" autocomplete="off" spellcheck="false" aria-label="Name Spieler 2">
+            </label>
+          </div>
+        </div>
+        <div class="player-config-row player-config-yellow">
+          <span class="config-player-number" aria-hidden="true">3</span>
+          <div class="config-fields">
+            <label for="type2">TYP
+              <select id="type2" class="config-type" aria-label="Typ Spieler 3">
+                <option value="human">Spieler</option>
+                <option value="easy">Computer Leicht</option>
+                <option value="medium">Computer Mittel</option>
+                <option value="hard">Computer Schwer</option>
+              </select>
+            </label>
+            <label for="name2">NAME
+              <input id="name2" type="text" maxlength="14" value="Spieler 3" autocomplete="off" spellcheck="false" aria-label="Name Spieler 3">
+            </label>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="button start-button" id="startBtn">SHOW STARTEN <span aria-hidden="true">→</span></button>
+      <div class="modal-footnote">AUTOMATISCHER SPIELSTAND · 90ER-SHOW-DESIGN · WÖRTERDATEI EDITIERBAR · TON AN/AUS</div>
+    </div>
+  </div>
+
+  <div class="overlay is-hidden" id="solveOverlay" role="dialog" aria-modal="true" aria-labelledby="solveHeading">
+    <div class="modal narrow-modal"><button type="button" class="modal-close" id="solveClose" aria-label="Lösungseingabe schließen">×</button><div class="modal-topline">✦ DIE GROSSE CHANCE ✦</div><h2 class="modal-heading" id="solveHeading">RÄTSEL <em>LÖSEN</em></h2><p class="modal-description">Tippe den vollständigen Begriff ein. Ein falscher Versuch kostet dich deinen Zug.</p><form id="solveForm"><label class="answer-label" for="answerInput">DEINE LÖSUNG</label><input id="answerInput" type="text" placeholder="Deine Antwort ..." autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="100" required><button type="submit" class="button start-button">ANTWORT PRÜFEN <span aria-hidden="true">→</span></button></form></div>
+  </div>
+
+  <div class="overlay is-hidden" id="roundOverlay" role="dialog" aria-modal="true" aria-labelledby="roundResultTitle">
+    <div class="modal result-modal"><div class="modal-topline" id="roundResultTopline">✦ RUNDE GESCHAFFT ✦</div><div class="result-trophy" aria-hidden="true">★</div><h2 class="modal-heading" id="roundResultTitle">GELÖST!</h2><p class="result-winner" id="resultWinner">SPIELER 1 GEWINNT</p><div class="result-answer-label">DIE LÖSUNG WAR</div><div class="result-answer" id="resultAnswer"></div><div class="result-points" id="resultPoints">+500 PUNKTE</div><div id="finalStandings" class="final-standings" hidden></div><button type="button" class="button start-button" id="nextRoundBtn">NÄCHSTE RUNDE <span aria-hidden="true">→</span></button></div>
+  </div>
+
+  <div class="overlay is-hidden" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpHeading"><div class="modal help-modal"><button type="button" class="modal-close" id="helpClose" aria-label="Spielregeln schließen">×</button><div class="modal-topline">✦ SO FUNKTIONIERT'S ✦</div><h2 class="modal-heading" id="helpHeading">DIE <em>REGELN</em></h2>
+    <ol class="rule-list"><li><strong>Rad drehen</strong><span>Der aktive Spieler dreht das Rad und wählt anschließend einen noch freien Konsonanten.</span></li><li><strong>Punkte kassieren</strong><span>Für jeden Treffer bekommst du den gedrehten Wert in deinen Rundentopf. Bei keinem Treffer ist der nächste Spieler dran.</span></li><li><strong>Vokale kaufen</strong><span>A, E, I, O, U, Ä, Ö und Ü kosten jeweils 250 Punkte aus deinem Rundentopf. Du brauchst dafür keinen Dreh.</span></li><li><strong>Auf das Rad achten</strong><span>Bei BANKROTT verlierst du deinen Rundentopf. Bei AUSSETZEN gibst du deinen Zug ab.</span></li><li><strong>Rätsel lösen</strong><span>Wer die Lösung richtig eingibt, gewinnt seinen Rundentopf und 500 Bonuspunkte. Nach fünf Runden gewinnt der höchste Gesamtstand.</span></li></ol>
+    <div class="help-tip">Tipp: Am Handy funktioniert alles per Tippen. Am Computer kannst du Buchstaben auch über die Tastatur wählen.</div><button type="button" class="button start-button" id="helpDoneBtn">VERSTANDEN <span aria-hidden="true">✓</span></button>
+  </div></div>
+  <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+  <div class="toast" id="toast" aria-live="polite" role="status"></div>
+  <script src="woerter.js"></script>
+  <script src="buchstabenfee.js"></script>
+  <script src="spiel.js"></script>
+</body>
+</html>

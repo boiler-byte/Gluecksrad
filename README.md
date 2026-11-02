@@ -1,16 +1,22 @@
-# Glücksrad – Retro Edition v13
+# Glücksrad – Retro Edition v14
 
 Ein eigenständiges, offline spielbares HTML-Buchstabenspiel im Stil einer 90er-TV-Show. Drei frei konfigurierbare Spielerplätze, Computergegner in drei Schwierigkeitsstufen, animierte Buchstabenwand, Sounds, eigenes Rätselarchiv und automatische Spielstand-Speicherung. Keine offizielle Ausgabe der Fernsehsendung.
 
 ## Starten
 
-1. `gluecksrad-v13.zip` entpacken.
-2. Alle enthaltenen Dateien im Ordner `gluecksrad-v13` zusammen belassen.
+1. `gluecksrad-v14.zip` entpacken.
+2. Alle enthaltenen Dateien im Ordner `gluecksrad-v14` zusammen belassen.
 3. `index.html` im Browser öffnen. Es sind keine Installation und keine Internetverbindung erforderlich.
 4. Spieler 1 ist standardmäßig **Spieler**, Spieler 2 und 3 sind standardmäßig **Computer Leicht**. Die Spielertypen und Namen können angepasst werden. Die Felder enthalten keine zusätzlichen sichtbaren Labels, bleiben aber für Screenreader beschriftet.
 5. Die gewünschte **Buchstabenfee** auswählen (Standard: Sonya Kraus; zusätzlich Marin Gilzer). **SHOW STARTEN** beginnt die Partie; **SHOW FORTSETZEN** lädt eine gespeicherte Partie mit ihrer eigenen Fee.
 
-## Neu in v13
+## Neu in v14
+
+- **Mobil kleinere Buchstabenfeen:** Unterhalb von 761 px Viewport-Breite skaliert die Fee mit `width: clamp(92px, 27vw, 175px)` statt wie bisher mit 42–45 vw und höheren Mindestwerten. Damit beträgt die Figur auf 375 px breiten Smartphones nur noch ca. **118 px Höhe** (bisher ca. 197 px); auf 600 px breiten Tablets ca. **189 px** (bisher ca. 263 px). Das gilt für Sonya Kraus, Marin Gilzer und über `feen.js` hinzugefügte Varianten.
+- **Desktop unverändert:** Auf breiten Bildschirmen bleibt die maximale Feenhöhe ca. **320 px**. Standhöhe `bottom: 10%`, Bewegungsabläufe, Greifdistanz und Offscreen-Verhalten bleiben unverändert. Die Positionsberechnung berücksichtigt automatisch die tatsächliche Sprite-Breite.
+- **Spielstände:** v14 speichert unter Version 14, v13- und ältere Spielstände bleiben lesbar.
+
+## Bisherige Änderungen (v13)
 
 - **Buchstabenfee nähert sich den Kacheln:** Beim Herangehen zum Aufdecken eines Buchstabens liegt die Zielposition rund **20 px näher** an der Kachel als in v12. Die Anpassung gilt für Sonya Kraus und Marin Gilzer auf allen Bildschirmgrößen. Die Ruheposition auf der Treppe, die Greifposen und das Offscreen-Verhalten bleiben unverändert.
 - **Spielstände:** v13 speichert unter Version 13 und kann vorhandene Spielstände einschließlich v12 laden.
@@ -87,7 +93,7 @@ Die Browser-Einstellung **Bewegung reduzieren** verkürzt Animationen stark.
 
 ## Speichern und fortsetzen
 
-Der Spielstand wird unter `localStorage.gluecksradGame` als JSON gespeichert. Eine aufgedeckte Buchstabenserie wird mit `phase: "revealing"`, `revealLetter` und `revealIndex` fortsetzbar gespeichert. Wird die Show während des Aufdeckens unterbrochen, setzt v13 bei der nächsten noch geschlossenen Kachel fort. Spieler, gewählte Buchstabenfee, Punkte, Radwinkel, Rätselreihenfolge, Sonderfeldverteilung und der Computerzug bleiben erhalten.
+Der Spielstand wird unter `localStorage.gluecksradGame` als JSON gespeichert. Eine aufgedeckte Buchstabenserie wird mit `phase: "revealing"`, `revealLetter` und `revealIndex` fortsetzbar gespeichert. Wird die Show während des Aufdeckens unterbrochen, setzt v14 bei der nächsten noch geschlossenen Kachel fort. Spieler, gewählte Buchstabenfee, Punkte, Radwinkel, Rätselreihenfolge, Sonderfeldverteilung und der Computerzug bleiben erhalten.
 
 Die Speicherdaten hängen vom jeweiligen Browser und von der Website-Adresse ab. Bei `file://` kann die Verfügbarkeit von `localStorage` je nach Browser unterschiedlich sein. Für zuverlässige dauerhafte Spielstände kann das Spiel über eine konstante lokale oder gehostete Webadresse geöffnet werden.
 

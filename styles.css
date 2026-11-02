@@ -609,14 +609,11 @@ body{
   43%{transform:translateY(-27px) scale(1.025)}
   75%{transform:translateY(0) scale(.98)}
 }
+/* V14: Mobil deutlich kleinere Buchstabenfee. 6x3-Frame-Seitenverhaeltnis
+   bleibt erhalten. Bei 375px Viewport ca. 101px Breite / 118px Hoehe.
+   Ab 761px greift unveraendert die Desktop-Regel (~320px maximal). */
 @media(max-width:760px){
-  .puzzle-board .fee-character{width:clamp(154px,42vw,225px);bottom:10%}
-}
-@media(max-width:440px){
-  .puzzle-board .fee-character{width:clamp(144px,45vw,206px);bottom:10%}
-}
-@media(max-width:345px){
-  .puzzle-board .fee-character{width:144px;bottom:10%}
+  .puzzle-board .fee-character{width:clamp(92px,27vw,175px);bottom:10%}
 }
 @media(prefers-reduced-motion:reduce){
   .fee-character.fee-celebrating .fee-sprite,.puzzle-board .tile.tile-lit,.puzzle-board .tile.tile-turning{animation:none!important}

@@ -25,5 +25,10 @@ window.GLUECKSRAD_FEEN = {
   pirat: {
     name: 'Pirat',
     atlas: 'buchstabenfee/pirat-atlas.webp'
+  },
+  alf: {
+    name: 'Alf',
+    atlas: 'buchstabenfee/alf-atlas.webp',
+    ratio: "16/12"
   }
 };

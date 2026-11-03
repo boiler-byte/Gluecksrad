@@ -650,6 +650,9 @@ body{
   .puzzle-board.many-lines .tile{height:clamp(23px,5vw,31px);border-bottom-width:2px}
   .puzzle-board.dense-lines .puzzle-lines{gap:3px}
   .puzzle-board.dense-lines .tile{height:clamp(20px,4.4vw,26px)}
+  /* Auch die längsten neuen Filmzitate (bis sechs Reihen) passen mobil. */
+  .puzzle-board.very-dense-lines .puzzle-lines{gap:2px}
+  .puzzle-board.very-dense-lines .tile{height:clamp(17px,3.8vw,21px)}
 }
 
 /* V10: Anzahl und Verteilung der Sonderfelder wechseln in jeder Runde. */
@@ -1005,4 +1008,49 @@ body{
   .letter-callout.is-miss .letter-callout-bubble,
   .letter-callout.is-miss .letter-callout-tail {animation-duration:.01ms}
   .letter-callout-flare,.letter-callout-particle {display:none}
+}
+
+
+/* V17: Rahmen und obere Markierungsleiste sind bei inaktiven Spielern neutral.
+   Nur die aktuell aktive Spielerkarte erhält ihre individuelle Akzentfarbe. */
+.scoreboard-bar .player-card:not(.active) {
+  border-color:rgba(194,185,180,.28);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055);
+}
+.scoreboard-bar .player-card:not(.active)::before {
+  background:rgba(194,185,180,.30);
+  box-shadow:none;
+}
+/* Auch ein Link im Show-Menü verhält sich wie die übrigen Menüschaltflächen. */
+.show-menu-panel a.show-menu-action {text-decoration:none;}
+
+
+/* V20: Kategorieauswahl im Show-Setup, unabhängig vom Scoreboard-Menü. */
+.category-config {
+  min-width:0;
+  margin-top:13px;
+  padding:10px 12px;
+  border:1px solid rgba(255,219,121,.38);
+  border-radius:12px;
+  background:linear-gradient(180deg,rgba(63,10,10,.95),rgba(38,6,6,.98));
+  text-align:left;
+}
+.category-config .field-title {display:block;margin:0 0 6px}
+.category-select {
+  display:block;width:100%;min-width:0;min-height:41px;
+  padding:8px 32px 8px 11px;
+  border:1px solid rgba(255,219,121,.48);border-radius:9px;
+  appearance:none;-webkit-appearance:none;
+  color-scheme:light;color:#fff8e9;
+  background:#271019 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23ffe1a2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 11px center / 12px 8px no-repeat;
+  font:600 13px system-ui,sans-serif;cursor:pointer;
+}
+.category-select option{background:#fff8e9;color:#28121b}
+.category-select option:disabled{color:#777}
+.category-select:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.category-hint{margin:6px 0 0;color:#e4c29a;font-size:11px;line-height:1.35}
+@media(max-width:440px){
+  .category-config{margin-top:9px;padding:8px 9px}
+  .category-select{min-height:38px;font-size:12px}
+  .category-hint{font-size:10px}
 }

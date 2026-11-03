@@ -30,5 +30,9 @@ window.GLUECKSRAD_FEEN = {
     name: 'Alf',
     atlas: 'buchstabenfee/alf-atlas.webp',
     ratio: "16/12"
+  },
+  picard: {
+    name: 'Captain Picard',
+    atlas: 'buchstabenfee/picard-atlas.webp'
   }
 };

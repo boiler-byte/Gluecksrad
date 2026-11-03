@@ -4,7 +4,7 @@
 
   const ROUNDS = 5;
   const SAVE_KEY = 'gluecksradGame';
-  const SAVE_VERSION = 16;
+  const SAVE_VERSION = 20;
   const VOWEL_COST = 250;
   const SOLVE_BONUS = 500;
   const VOWELS = 'AEIOUÄÖÜ';
@@ -103,15 +103,13 @@
     return String(text).toLocaleUpperCase('de-DE');
   }
   function normalizePuzzle(text) {
-    // Fremdsprachige Akzente auf Grundbuchstaben abbilden; Umlaute bleiben eigenständig.
-    return upper(text).replace(/ẞ/g, 'SS').replace(/[ÉÈÊË]/g, 'E').replace(/[ÁÀÂ]/g, 'A')
-      .replace(/[ÍÌÎÏ]/g, 'I').replace(/[ÓÒÔ]/g, 'O').replace(/[ÚÙÛ]/g, 'U').replace(/Ç/g, 'C');
+    return window.GluecksradBrett.normalizePuzzle(text);
   }
   function simplifiedAnswer(text) {
     return upper(text).replace(/Ä/g, 'AE').replace(/Ö/g, 'OE').replace(/Ü/g, 'UE').replace(/ẞ/g, 'SS').replace(/[^A-Z0-9]/g, '');
   }
   function isLetter(char) {
-    return /^[A-ZÄÖÜ]$/.test(char);
+    return window.GluecksradBrett.isLetter(char);
   }
   function isVowel(char) {
     return VOWELS.includes(char);
@@ -477,6 +475,38 @@
       $('name' + i).value = p.name;
     });
   }
+  // V20: Die Kategorien kommen ausschließlich aus woerter.js. So tauchen
+  // selbst ergänzte Kategorien beim nächsten Laden automatisch in der Auswahl auf.
+  function availablePuzzles() {
+    return (Array.isArray(window.GLUECKSRAD_WOERTER) ? window.GLUECKSRAD_WOERTER : [])
+      .filter(item => item && typeof item.text === 'string' && item.text.trim().length >= 4)
+      .map(item => ({ text: normalizePuzzle(item.text.trim()), category: String(item.kategorie || 'Begriff').trim() || 'Begriff' }));
+  }
+  function setupCategoryOptions() {
+    const select = $('categorySelect');
+    const puzzles = availablePuzzles();
+    const counts = new Map();
+    puzzles.forEach(puzzle => counts.set(puzzle.category, (counts.get(puzzle.category) || 0) + 1));
+    select.replaceChildren();
+    const all = document.createElement('option');
+    all.value = '';
+    all.textContent = 'Alle Kategorien (' + puzzles.length + ' Rätsel)';
+    select.appendChild(all);
+    const categoryNames = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'de'));
+    for (const category of categoryNames) {
+      const count = counts.get(category);
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category + ' (' + count + ' Rätsel)' + (count < ROUNDS ? ' – mindestens 5 benötigt' : '');
+      option.disabled = count < ROUNDS;
+      select.appendChild(option);
+    }
+  }
+  function setCategorySelection(category) {
+    const select = $('categorySelect');
+    const value = typeof category === 'string' ? category : '';
+    select.value = [...select.options].some(option => option.value === value && !option.disabled) ? value : '';
+  }
   function setupFairyOptions() {
     const select = $('fairySelect');
     select.replaceChildren();
@@ -521,7 +551,7 @@
     const validPlayer = p => p && typeof p.name === 'string' && p.name.length > 0 && p.name.length <= 40 &&
       (p.type === 'human' || (p.type === 'cpu' && !!DIFFICULTIES[p.difficulty])) &&
       finitePoints(p.total) && finitePoints(p.bank);
-    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, SAVE_VERSION].includes(snapshot.version) &&
+    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, SAVE_VERSION].includes(snapshot.version) &&
       (snapshot.phase !== 'revealing' || (
         ALL_KEYS.includes(snapshot.revealLetter) &&
         Number.isInteger(snapshot.revealIndex) && snapshot.revealIndex >= 0 &&
@@ -531,7 +561,9 @@
       Number.isInteger(snapshot.current) && snapshot.current >= 0 && snapshot.current < 3 &&
       Array.isArray(snapshot.deck) && snapshot.deck.every(p => p && typeof p.text === 'string' && typeof p.category === 'string') &&
       typeof snapshot.phrase === 'string' && snapshot.phrase.length >= 4 &&
-      typeof snapshot.category === 'string' && Array.isArray(snapshot.used) &&
+      typeof snapshot.category === 'string' &&
+      (snapshot.version < 20 || (typeof snapshot.categoryFilter === 'string' && snapshot.categoryFilter.length <= 120)) &&
+      Array.isArray(snapshot.used) &&
       snapshot.used.every(isLetter) && typeof snapshot.outcomes === 'object' && snapshot.outcomes !== null &&
       ['idle', 'intro', 'spinning', 'consonant', 'vowel', 'handover', 'solved', 'revealing'].includes(snapshot.phase) &&
       Number.isFinite(snapshot.wheelAngle) &&
@@ -559,8 +591,9 @@
     const currentLabel = snapshot.phase === 'solved'
       ? (snapshot.round === ROUNDS ? 'Alle 5 Runden abgeschlossen' : 'Runde ' + snapshot.round + ' gelöst')
       : currentPlayer.name + ' ist am Zug';
+    const categoryLabel = snapshot.categoryFilter || 'Alle Kategorien';
     $('resumeSummary').textContent = 'Runde ' + snapshot.round + ' / ' + ROUNDS + ' · ' + currentLabel +
-      ' · ' + snapshot.players.map(p => p.name + ': ' + number(p.total)).join(' / ');
+      ' · Kategorie: ' + categoryLabel + ' · ' + snapshot.players.map(p => p.name + ': ' + number(p.total)).join(' / ');
   }
   function persistGame() {
     if (!game) return;
@@ -580,6 +613,7 @@
         current: game.current,
         phrase: game.phrase,
         category: game.category,
+        categoryFilter: game.categoryFilter,
         used: [...game.used],
         outcomes: { ...game.outcomes },
         phase: game.phase,
@@ -636,6 +670,7 @@
       stopPending();
       setConfigFromPlayers(game.players);
       setFairySelection(game.fairyId);
+      setCategorySelection(game.categoryFilter);
     }
     $('setupClose').hidden = !game;
     refreshResumePanel();
@@ -658,11 +693,11 @@
     const last = oldSave || game;
     if (last && !(last.phase === 'solved' && last.round === ROUNDS) &&
         !window.confirm('Die gespeicherte Show wird ersetzt. Eine neue Show starten?')) return;
-    const words = (Array.isArray(window.GLUECKSRAD_WOERTER) ? window.GLUECKSRAD_WOERTER : [])
-      .filter(item => item && typeof item.text === 'string' && item.text.trim().length >= 4)
-      .map(item => ({ text: normalizePuzzle(item.text.trim()), category: String(item.kategorie || 'Begriff').trim() || 'Begriff' }));
+    const categoryFilter = $('categorySelect').value;
+    const words = availablePuzzles().filter(puzzle => !categoryFilter || puzzle.category === categoryFilter);
     if (words.length < ROUNDS) {
-      toast('Bitte mindestens fünf Rätsel in woerter.js eintragen.');
+      toast(categoryFilter ? 'Für „' + categoryFilter + '“ sind mindestens fünf Rätsel nötig.' :
+        'Bitte mindestens fünf Rätsel in woerter.js eintragen.');
       return;
     }
     stopPending();
@@ -674,6 +709,7 @@
       round: 0,
       sectorEffects: Array(BASE_SECTORS.length).fill(null),
       deck: shuffled(words),
+      categoryFilter,
       previousCategory: '',
       current: 0,
       phrase: '',
@@ -711,6 +747,7 @@
       ...snapshot,
       players: snapshot.players.map(p => ({ ...p })),
       deck: snapshot.deck.map(p => ({ ...p })),
+      categoryFilter: typeof snapshot.categoryFilter === 'string' ? snapshot.categoryFilter : '',
       used: new Set(snapshot.used),
       outcomes: { ...snapshot.outcomes }
     };
@@ -718,6 +755,7 @@
     // Nicht mehr registrierte Feen werden ebenfalls sicher auf Sonya gesetzt.
     game.fairyId = fairy.setVariant(snapshot.fairyId || fairy.defaultVariant());
     setFairySelection(game.fairyId);
+    setCategorySelection(game.categoryFilter);
     if (snapshot.version < 10) {
       // Alte feste Bankrott-/Aussetzen-Positionen werden beim Fortsetzen
       // durch die neue Verteilung dieser Runde ersetzt.
@@ -809,127 +847,16 @@
     beginWheelIntroduction();
   }
 
-  // Maximal zwölf Tile-Positionen nebeneinander: komplette Wörter bleiben
-  // zusammen, sofern sie in eine Zeile passen. Längere Wörter werden nach
-  // zwölf Zeichen weitergeführt; die DOM-Reihenfolge bleibt die Leserichtung.
-  const MAX_TILES_PER_LINE = 12;
+  // V17: Die Rätselwand wird vom selben Renderer wie woerter.html gezeichnet.
+  // Der Sprite bleibt ausschließlich in der Spielansicht.
   function buildBoard() {
     const board = $('puzzleBoard');
     const fee = $('feeCharacter');
-    board.replaceChildren();
-    const lines = document.createElement('div');
-    lines.className = 'puzzle-lines';
-    board.appendChild(lines);
-    let line = null;
-    let occupied = 0;
-    const newLine = () => {
-      line = document.createElement('div');
-      line.className = 'puzzle-line';
-      lines.appendChild(line);
-      occupied = 0;
-    };
-    const addWord = characters => {
-      const word = document.createElement('div');
-      word.className = 'word';
-      for (const character of characters) {
-        const tile = document.createElement('span');
-        if (isLetter(character)) {
-          tile.className = 'tile';
-          tile.dataset.letter = character;
-          tile.setAttribute('aria-label', 'Verdeckter Buchstabe');
-          const inner = document.createElement('span');
-          inner.className = 'tile-letter';
-          inner.textContent = character;
-          inner.setAttribute('aria-hidden', 'true');
-          tile.appendChild(inner);
-        } else {
-          tile.className = 'tile revealed static-tile';
-          tile.textContent = character;
-          tile.setAttribute('aria-label', 'Sonderzeichen ' + character);
-        }
-        word.appendChild(tile);
-      }
-      line.appendChild(word);
-      occupied += characters.length;
-    };
-    const addSpace = count => {
-      const group = document.createElement('div');
-      group.className = 'word space-group';
-      for (let i = 0; i < count; i++) {
-        const tile = document.createElement('span');
-        tile.className = 'tile space-tile';
-        tile.setAttribute('aria-hidden', 'true');
-        group.appendChild(tile);
-      }
-      line.appendChild(group);
-      occupied += count;
-    };
-    newLine();
-    let pendingSpaces = 0;
-    for (const token of game.phrase.match(/\S+|\s+/g) || []) {
-      if (/^\s+$/.test(token)) { pendingSpaces += [...token].length; continue; }
-      const letters = [...token];
-      // Nie ein teilbares Wort am Ende der Zeile zerreißen, wenn es in der
-      // nächsten Zeile komplett Platz hat.
-      if (occupied && occupied + pendingSpaces + letters.length > MAX_TILES_PER_LINE) {
-        newLine();
-        pendingSpaces = 0;
-      }
-      while (letters.length) {
-        const spaces = occupied ? Math.min(pendingSpaces, MAX_TILES_PER_LINE - occupied) : 0;
-        if (occupied && occupied + spaces >= MAX_TILES_PER_LINE) {
-          newLine();
-          pendingSpaces = 0;
-          continue;
-        }
-        if (spaces) addSpace(spaces);
-        pendingSpaces = 0;
-        // Überlange Einzelwörter gleichmäßig verteilen, statt einen
-        // einzelnen Buchstaben in der letzten Zeile stehen zu lassen.
-        const minSegments = Math.ceil(letters.length / MAX_TILES_PER_LINE);
-        const balanced = occupied === 0 && minSegments > 1
-          ? Math.ceil(letters.length / minSegments) : letters.length;
-        const amount = Math.min(balanced, MAX_TILES_PER_LINE - occupied);
-        addWord(letters.splice(0, amount));
-        if (letters.length) newLine();
-      }
-    }
-    // Viele Zeilen erhalten auf kleinen Bildschirmen kompaktere Feldhöhen,
-    // damit alle Buchstaben innerhalb des Hintergrund-Displays bleiben.
-    board.classList.toggle('many-lines', lines.children.length >= 4);
-    board.classList.toggle('dense-lines', lines.children.length >= 5);
-    // Der absolut positionierte Sprite ist kein Teil des Zeilenrasters.
+    window.GluecksradBrett.buildBoard(board, game.phrase, false);
     board.appendChild(fee);
   }
   function sizeBoardTiles() {
-    if (!game) return;
-    const board = $('puzzleBoard');
-    const lines = [...board.querySelectorAll('.puzzle-line')];
-    if (!lines.length) return;
-    const viewport = window.innerWidth;
-    const natural = viewport <= 440 ? Math.min(27, Math.max(19, viewport * .064))
-      : viewport <= 760 ? Math.min(34, viewport * .052) : Math.min(38, viewport * .032);
-    const style = getComputedStyle(board);
-    const innerWidth = Math.max(60, board.clientWidth - parseFloat(style.paddingLeft || 0)
-      - parseFloat(style.paddingRight || 0) - 4);
-    // Tile-Breiten sind proportional zur Sprite-Größe. Die Abstände bleiben
-    // in Pixeln konstant. Rechnen statt wiederholt messen: Browser liefern
-    // unmittelbar nach einer Änderung der CSS-Variablen teils alte Rects.
-    let target = natural;
-    for (const line of lines) {
-      const groups = [...line.children];
-      const lineGap = parseFloat(getComputedStyle(line).columnGap) || 0;
-      let fixed = Math.max(0, groups.length - 1) * lineGap;
-      let proportional = 0;
-      for (const group of groups) {
-        const tiles = [...group.querySelectorAll('.tile')];
-        const gap = parseFloat(getComputedStyle(group).columnGap) || 0;
-        fixed += Math.max(0, tiles.length - 1) * gap;
-        for (const tile of tiles) proportional += tile.classList.contains('space-tile') ? .72 : 1;
-      }
-      if (proportional > 0) target = Math.min(target, (innerWidth - fixed) / proportional);
-    }
-    board.style.setProperty('--tile-size', Math.max(12, target).toFixed(2) + 'px');
+    if (game) window.GluecksradBrett.sizeBoardTiles($('puzzleBoard'));
   }
   function hiddenCount() {
     return [...game.phrase].filter(char => isLetter(char) && !game.used.has(char)).length;
@@ -1481,6 +1408,7 @@
     drawWheel();
     buildKeyboard();
     setupFairyOptions();
+    setupCategoryOptions();
     fairy.setVariant(fairy.defaultVariant());
     bindEvents();
     refreshSoundButton();
@@ -1488,6 +1416,7 @@
     if (saved) {
       setConfigFromPlayers(saved.players);
       setFairySelection(saved.fairyId || fairy.defaultVariant());
+      setCategorySelection(saved.categoryFilter);
       soundOn = saved.soundOn !== false;
       refreshSoundButton();
     }

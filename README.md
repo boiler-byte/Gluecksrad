@@ -1,16 +1,39 @@
-# Glücksrad – Retro Edition v16
+# Glücksrad – Retro Edition v19
 
 Ein eigenständiges, offline spielbares HTML-Buchstabenspiel im Stil einer 90er-TV-Show. Drei frei konfigurierbare Spielerplätze, Computergegner in drei Schwierigkeitsstufen, animierte Buchstabenwand, Sounds, eigenes Rätselarchiv und automatische Spielstand-Speicherung. Keine offizielle Ausgabe der Fernsehsendung.
 
 ## Starten
 
-1. `gluecksrad-v16.zip` entpacken.
-2. Alle enthaltenen Dateien im Ordner `gluecksrad-v16` zusammen belassen.
+1. `gluecksrad-v19.zip` entpacken.
+2. Alle enthaltenen Dateien im Ordner `gluecksrad-v19` zusammen belassen.
 3. `index.html` im Browser öffnen. Es sind keine Installation und keine Internetverbindung erforderlich.
 4. Spieler 1 ist standardmäßig **Spieler**, Spieler 2 und 3 sind standardmäßig **Computer Leicht**. Die Spielertypen und Namen können angepasst werden. Die Felder enthalten keine zusätzlichen sichtbaren Labels, bleiben aber für Screenreader beschriftet.
 5. Die gewünschte **Buchstabenfee** auswählen (Standard: Sonya Kraus; zusätzlich Marin Gilzer). **SHOW STARTEN** beginnt die Partie; **SHOW FORTSETZEN** lädt eine gespeicherte Partie mit ihrer eigenen Fee.
 
-## Neu in v16
+## Neu in v19
+
+- **Bindestrich-Umbruch korrigiert:** Lange zusammengesetzte Wörter werden jetzt **nach dem Bindestrich** getrennt. Der Bindestrich bleibt am Ende der vorherigen Zeile: `Fröhliches Vogel-gezwitscher` wird zu `FRÖHLICHES` / `VOGEL-` / `GEZWITSCHER` (maximal zwölf Kacheln pro Zeile).
+- **Spiel und Wörterarchiv identisch:** Beide verwenden die angepasste gemeinsame Umbruchlogik in `raetselbrett.js`. Die Erklärung in `woerter.html` wurde entsprechend korrigiert.
+- **Ansonsten unverändert:** Alle 280 Rätsel, Kategorien, die Buchstabenfee, Spielregeln und die Mobilansicht aus v18 bleiben erhalten. Bereits gespeicherte Spielstände aus v18 und älteren Versionen sind weiter lesbar; v19 speichert unter Version 19.
+
+## Bisherige Änderungen (v18)
+
+- **Vier neue Rätselkategorien:** `Star Trek`, `Berühmte Filmzitate`, `Berühmte Musiktitel` und `Neurologie`, mit jeweils 18 neuen Rätseln. Die 208 vorhandenen Rätsel bleiben erhalten – insgesamt **280 Rätsel** in `woerter.js`.
+- **Intelligenter Zeilenumbruch an Bindestrichen:** Überlange Wörter wurden in v18 bevorzugt **vor** einem expliziten Bindestrich getrennt. **Seit v19** erfolgt der Umbruch stattdessen **nach** dem Bindestrich. Zum Beispiel `Fröhliches Vogel-gezwitscher` wird zu `FRÖHLICHES` / `VOGEL-` / `GEZWITSCHER` (maximal zwölf Kacheln je Zeile).
+- **Ausreichend kurze Wörter** und Wörter, die auf eine Zeile passen, bleiben zusammen; für lange Wortteile **ohne** geeigneten Bindestrich bleibt die bisherige gleichmäßige Aufteilung bestehen. Es werden keine neuen Trennstriche erfunden. Bei sechs Zeilen werden die Kacheln auf kleinen Bildschirmen zusätzlich kompakter dargestellt.
+- **`woerter.html`:** Das Wörterarchiv benutzt automatisch dieselbe Darstellung wie das Spiel. Der Filter „Nur Wörter mit automatischer Trennung“ markiert jetzt gezielt Fälle, die trotz möglicher vorhandener Bindestriche weiterhin innerhalb eines Wortteils aufgeteilt werden müssen. Die Kategorien stehen automatisch in der Filterauswahl.
+- **Spielstände:** v18 liest Spielstände aus v17 und früheren Versionen. Der Speichername (`gluecksradGame`) bleibt gleich; neue Partien enthalten die zusätzlichen Kategorien.
+
+## Bisherige Änderungen (v17)
+
+- **Scoreboard:** Bei Spielern, die aktuell nicht am Zug sind, werden der Kartenrahmen und die obere Markierung (`::before`) neutral grau statt in der jeweiligen Spielerfarbe dargestellt. Der aktive Spieler bleibt farbig hervorgehoben; Punktefarben und Spielmechanik bleiben unverändert.
+- **`woerter.html`:** Komplettes, durchsuchbares Rätselarchiv mit Kategorieauswahl und einem Filter für überlange Wörter (über 12 Kacheln ohne Leerzeichen). Jedes Rätsel wird auf einer **vollständig aufgedeckten Buchstabenwand** mit denselben Zeichen, Leerfeldern und Zeilenumbrüchen wie im Spiel angezeigt. Ein Klick auf **GROSSANSICHT** öffnet ein breites Spielbrett. Unter jedem Brett steht der unbearbeitete Originaltext aus `woerter.js`.
+- **Wichtig für Trennstriche:** Das Spiel teilt Wörter über 12 Zeichen auf mehrere Zeilen, setzt dabei aber **keinen automatischen Bindestrich** ein. Wo in der Wortliste ein Bindestrich gebraucht wird, musst du ihn direkt im Text des jeweiligen Eintrags in `woerter.js` ergänzen. Danach erscheinen Änderungen sowohl im Spiel als auch im Archiv. `woerter.html` verändert die Datei nicht selbst.
+- **Gemeinsamer Renderer:** Die Datei `raetselbrett.js` enthält die bisherige Aufteilungs- und Kachellogik, die jetzt von Spiel und Archiv gemeinsam verwendet wird. Offline nutzbar, keine Fremdbibliotheken und kein Server notwendig.
+- **Erreichbarkeit:** Über das Show-Menü im Spiel lässt sich das Wörterarchiv in einem neuen Tab öffnen. Alternativ `woerter.html` direkt öffnen.
+- **Spielstände:** v17 übernimmt bestehende Spielstände aus v16 und früheren Versionen; die Speicherkennung bleibt unverändert.
+
+## Bisherige Änderungen (v16)
 
 - **Buchstabenansage am Scoreboard:** Sobald ein Mensch oder Computer einen Konsonanten oder Vokal wählt, erscheint direkt unter der stets sichtbaren Spielstandleiste eine Retro-Sprechblase: beispielsweise **„Ein 'A', wie 'Anton'.“**. Alle spielbaren Buchstaben einschließlich Ä, Ö und Ü haben ein eigenes Buchstabierwort. Die Liste ist in `spiel.js` unter `SPELLING_WORDS` anpassbar.
 - **Auf den Sprecher zeigender Pfeil:** Die Sprechblase bleibt innerhalb der verfügbaren Bildschirmbreite und richtet ihre obere Spitze pixelgenau auf das Feld des ansagenden Spielers. Sie folgt beim Ändern der Fensterbreite; das Scoreboard bleibt sticky.

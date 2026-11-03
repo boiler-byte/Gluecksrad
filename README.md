@@ -1,16 +1,26 @@
-# Glücksrad – Retro Edition v15
+# Glücksrad – Retro Edition v16
 
 Ein eigenständiges, offline spielbares HTML-Buchstabenspiel im Stil einer 90er-TV-Show. Drei frei konfigurierbare Spielerplätze, Computergegner in drei Schwierigkeitsstufen, animierte Buchstabenwand, Sounds, eigenes Rätselarchiv und automatische Spielstand-Speicherung. Keine offizielle Ausgabe der Fernsehsendung.
 
 ## Starten
 
-1. `gluecksrad-v15.zip` entpacken.
-2. Alle enthaltenen Dateien im Ordner `gluecksrad-v15` zusammen belassen.
+1. `gluecksrad-v16.zip` entpacken.
+2. Alle enthaltenen Dateien im Ordner `gluecksrad-v16` zusammen belassen.
 3. `index.html` im Browser öffnen. Es sind keine Installation und keine Internetverbindung erforderlich.
 4. Spieler 1 ist standardmäßig **Spieler**, Spieler 2 und 3 sind standardmäßig **Computer Leicht**. Die Spielertypen und Namen können angepasst werden. Die Felder enthalten keine zusätzlichen sichtbaren Labels, bleiben aber für Screenreader beschriftet.
 5. Die gewünschte **Buchstabenfee** auswählen (Standard: Sonya Kraus; zusätzlich Marin Gilzer). **SHOW STARTEN** beginnt die Partie; **SHOW FORTSETZEN** lädt eine gespeicherte Partie mit ihrer eigenen Fee.
 
-## Neu in v15
+## Neu in v16
+
+- **Buchstabenansage am Scoreboard:** Sobald ein Mensch oder Computer einen Konsonanten oder Vokal wählt, erscheint direkt unter der stets sichtbaren Spielstandleiste eine Retro-Sprechblase: beispielsweise **„Ein 'A', wie 'Anton'.“**. Alle spielbaren Buchstaben einschließlich Ä, Ö und Ü haben ein eigenes Buchstabierwort. Die Liste ist in `spiel.js` unter `SPELLING_WORDS` anpassbar.
+- **Auf den Sprecher zeigender Pfeil:** Die Sprechblase bleibt innerhalb der verfügbaren Bildschirmbreite und richtet ihre obere Spitze pixelgenau auf das Feld des ansagenden Spielers. Sie folgt beim Ändern der Fensterbreite; das Scoreboard bleibt sticky.
+- **Treffer in Gold:** Bei mindestens einem Treffer leuchtet die Sprechblase goldgelb auf, gibt Glanzpartikel ab und löst sich nach oben auf, während die Buchstabenfee wie zuvor die Treffer aufdeckt.
+- **Fehlschlag mit Platzen:** Ist der Buchstabe nicht enthalten, bläht sich die Sprechblase kurz auf, zerplatzt in Splitter und verschwindet. Der Zugwechsel beginnt erst nach der Animation, damit die Ansage lesbar bleibt.
+- **Bedienung und Barrierefreiheit:** Keine Verschiebung des Mobil-Layouts; die Ansage verhindert keine Klicks und kann von Screenreadern vorgelesen werden. Bei aktivierter Systemoption „Bewegung reduzieren“ werden Effekte stark verkürzt.
+- **Spielstände:** v16 speichert unter Version 16. Vorhandene Spielstände aus v15 und früheren Versionen bleiben lesbar; Sprechblasen sind bewusst vorübergehende UI-Effekte und werden nicht mitgespeichert.
+
+## Bisherige Änderungen (v15)
+
 
 - **Weniger Scrollen auf Smartphones:** Bei einer Viewport-Breite von maximal 760 px bilden Rad und Steuerung eine gemeinsame, gleich hohe Fläche. Die `controls-card` wird direkt über das Rad geschoben statt dauerhaft unter dem Rad zu stehen.
 - **Aktionen verfügbar (`idle`):** Die Steuerkarte gleitet etwa zur Hälfte über das Rad. Sie zeigt Rad drehen, Vokal kaufen und Lösen, aber keine Buchstabentastatur. Der separate Link **ZUG ABGEBEN** bleibt im kompakten Zustand erreichbar.

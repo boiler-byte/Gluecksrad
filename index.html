@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#490c0a">
   <meta name="description" content="Ein mobilfreundliches Retro-Glücksrad für drei Spieler – lokal oder gegen den Computer, komplett offline spielbar.">
-  <title>Glücksrad – Retro Edition v15</title>
+  <title>Glücksrad – Retro Edition v16</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -40,6 +40,13 @@
             <button type="button" class="show-menu-action" id="newGameBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2 6"/><path d="M3 4v7h7"/></svg><span>SHOW-MENÜ</span></button>
           </div>
         </div>
+        <!-- V16: Ansage direkt unter der fixierten Punkteanzeige; die Spitze zeigt zum Sprecher. -->
+        <div class="letter-callout" id="letterCallout" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
+          <span class="letter-callout-tail" aria-hidden="true"></span>
+          <div class="letter-callout-bubble"><span class="letter-callout-text" id="letterCalloutText"></span></div>
+          <span class="letter-callout-flare" aria-hidden="true"></span>
+          <span class="letter-callout-particles" id="letterCalloutParticles" aria-hidden="true"></span>
+        </div>
       </div>
       <section class="board-card" aria-labelledby="boardHeading">
         <div class="board-header"><h1 id="boardHeading">KATEGORIE</h1><div class="round-pill" id="roundLabel">RUNDE 1 / 5</div></div>
@@ -71,7 +78,7 @@
         </section>
       </div>
     </main>
-    <footer class="footer"><span>✦ RETRO EDITION V15 · MIT BUCHSTABENFEE</span><span id="saveStatus">OHNE ANMELDUNG · AUCH OFFLINE</span></footer>
+    <footer class="footer"><span>✦ RETRO EDITION V16 · MIT BUCHSTABENFEE</span><span id="saveStatus">OHNE ANMELDUNG · AUCH OFFLINE</span></footer>
   </div>
 
   <div class="overlay" id="setupOverlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">

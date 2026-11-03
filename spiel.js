@@ -4,12 +4,22 @@
 
   const ROUNDS = 5;
   const SAVE_KEY = 'gluecksradGame';
-  const SAVE_VERSION = 15;
+  const SAVE_VERSION = 16;
   const VOWEL_COST = 250;
   const SOLVE_BONUS = 500;
   const VOWELS = 'AEIOUÄÖÜ';
   const KEY_ROWS = ['QWERTZUIOPÜ', 'ASDFGHJKLÖÄ', 'YXCVBNM'];
   const ALL_KEYS = KEY_ROWS.join('').split('');
+  // V16: Deutsche Buchstabierwörter für die Ansage am Scoreboard.
+  // Die Wörter sind bewusst selbst gepflegt und funktionieren vollständig offline.
+  const SPELLING_WORDS = {
+    A: 'Anton', B: 'Berta', C: 'Cäsar', D: 'Dora', E: 'Emil',
+    F: 'Friedrich', G: 'Gustav', H: 'Heinrich', I: 'Ida', J: 'Julius',
+    K: 'Kaufmann', L: 'Ludwig', M: 'Martha', N: 'Nordpol', O: 'Otto',
+    P: 'Paula', Q: 'Quelle', R: 'Richard', S: 'Samuel', T: 'Theodor',
+    U: 'Ulrich', V: 'Viktor', W: 'Wilhelm', X: 'Xanthippe', Y: 'Ypsilon',
+    Z: 'Zacharias', Ä: 'Ärger', Ö: 'Ökonom', Ü: 'Übermut'
+  };
   // 18 feste Zahlenpositionen, in jeder Runde mit neu gelosten Sonderfeldern belegt.
   const BASE_SECTORS = [
     { label: '100', points: 100, color: '#f7ca6b' },
@@ -62,6 +72,8 @@
   let wheelIntroFrame = null;
   let runToken = 0;
   let toastTimer = null;
+  let letterCalloutSpeaker = null;
+  let letterCalloutToken = 0;
   const timers = new Set();
   const fairy = window.GluecksradFee;
   const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,6 +87,7 @@
     return id;
   }
   function stopPending() {
+    clearLetterCallout();
     for (const id of timers) clearTimeout(id);
     timers.clear();
     if (spinFrame !== null) cancelAnimationFrame(spinFrame);
@@ -135,6 +148,79 @@
     el.classList.add('show');
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // V16: Ein eigenständiger, nicht gespeicherter Ansage-Effekt. Dadurch bleiben
+  // laufende Spiele und Spielstände aus älteren Versionen kompatibel.
+  function clearLetterCallout() {
+    letterCalloutToken++;
+    letterCalloutSpeaker = null;
+    const bubble = $('letterCallout');
+    if (!bubble) return;
+    bubble.classList.remove('is-visible', 'is-hit', 'is-miss');
+    bubble.setAttribute('aria-hidden', 'true');
+    bubble.style.removeProperty('left');
+    bubble.style.removeProperty('--callout-tip');
+    bubble.style.removeProperty('--speaker-color');
+    $('letterCalloutText').textContent = '';
+    $('letterCalloutParticles').replaceChildren();
+  }
+
+  function positionLetterCallout() {
+    if (letterCalloutSpeaker === null) return;
+    const bubble = $('letterCallout');
+    const bar = $('scoreboardBar');
+    const speaker = $('playerCard' + letterCalloutSpeaker);
+    if (!bubble.classList.contains('is-visible') || !speaker) return;
+    const barRect = bar.getBoundingClientRect();
+    const speakerRect = speaker.getBoundingClientRect();
+    const width = bubble.offsetWidth; // ohne Enter-Skalierung messen
+    const center = speakerRect.left + speakerRect.width / 2 - barRect.left;
+    // Auch am linken/rechten Rand liegt die ganze Ansage im Viewport.
+    const left = Math.max(4, Math.min(center - width / 2, barRect.width - width - 4));
+    const tip = Math.max(18, Math.min(width - 18, center - left));
+    bubble.style.left = Math.round(left) + 'px';
+    bubble.style.setProperty('--callout-tip', Math.round(tip) + 'px');
+  }
+
+  function scatterCalloutParticles(isHit) {
+    if (prefersReducedMotion) return;
+    const layer = $('letterCalloutParticles');
+    layer.replaceChildren();
+    const count = isHit ? 12 : 14;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + (isHit ? .2 : 0);
+      const distance = (isHit ? 52 : 65) + (i % 4) * 13;
+      const shard = document.createElement('i');
+      shard.className = 'letter-callout-particle';
+      shard.style.setProperty('--dx', Math.round(Math.cos(angle) * distance) + 'px');
+      shard.style.setProperty('--dy', Math.round(Math.sin(angle) * distance - (isHit ? 17 : 0)) + 'px');
+      shard.style.setProperty('--particle-delay', ((i % 4) * 22) + 'ms');
+      layer.appendChild(shard);
+    }
+  }
+
+  function showLetterCallout(letter, speakerIndex, isHit) {
+    clearLetterCallout();
+    const bubble = $('letterCallout');
+    letterCalloutSpeaker = speakerIndex;
+    const speaker = $('playerCard' + speakerIndex);
+    bubble.style.setProperty('--speaker-color', getComputedStyle(speaker).getPropertyValue('--accent').trim());
+    $('letterCalloutText').textContent = "Ein '" + letter + "', wie '" + SPELLING_WORDS[letter] + "'.";
+    bubble.setAttribute('aria-hidden', 'false');
+    bubble.classList.add('is-visible');
+    positionLetterCallout();
+    const token = letterCalloutToken;
+    const hold = prefersReducedMotion ? 210 : 820;
+    const finale = prefersReducedMotion ? 160 : 730;
+    later(() => {
+      if (token !== letterCalloutToken) return;
+      scatterCalloutParticles(isHit);
+      bubble.classList.add(isHit ? 'is-hit' : 'is-miss');
+    }, hold);
+    later(() => {
+      if (token === letterCalloutToken) clearLetterCallout();
+    }, hold + finale);
   }
 
   // Klänge werden direkt im Browser synthetisiert: keine Sound-Dateien nötig.
@@ -435,7 +521,7 @@
     const validPlayer = p => p && typeof p.name === 'string' && p.name.length > 0 && p.name.length <= 40 &&
       (p.type === 'human' || (p.type === 'cpu' && !!DIFFICULTIES[p.difficulty])) &&
       finitePoints(p.total) && finitePoints(p.bank);
-    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, SAVE_VERSION].includes(snapshot.version) &&
+    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, SAVE_VERSION].includes(snapshot.version) &&
       (snapshot.phase !== 'revealing' || (
         ALL_KEYS.includes(snapshot.revealLetter) &&
         Number.isInteger(snapshot.revealIndex) && snapshot.revealIndex >= 0 &&
@@ -695,6 +781,7 @@
   }
   function startRound() {
     if (!game || game.round >= ROUNDS) return;
+    clearLetterCallout();
     game.round++;
     game.sectorEffects = createRoundSectorEffects(game.round);
     applyRoundSectors();
@@ -1116,6 +1203,7 @@
     game.used.add(letter);
     const hits = [...game.phrase].filter(c => c === letter).length;
     game.outcomes[letter] = hits > 0;
+    showLetterCallout(letter, game.current, hits > 0);
     if (hits > 0) {
       if (!vowel) player().bank += hits * game.value;
       game.status = hits + ' Treffer für ' + letter + '! Die Buchstabenfee deckt sie nacheinander auf.';
@@ -1129,7 +1217,7 @@
     } else {
       sound('miss');
       updateBoard();
-      passTurn('Leider kein ' + letter + ' im Rätsel. Zugwechsel!');
+      passTurn('Leider kein ' + letter + ' im Rätsel. Zugwechsel!', prefersReducedMotion ? 400 : 1600);
     }
   }
   function advanceTurn() {
@@ -1143,14 +1231,14 @@
     render();
     maybeComputerTurn();
   }
-  function passTurn(message) {
+  function passTurn(message, delay = prefersReducedMotion ? 300 : 1050) {
     if (!game || game.phase === 'solved') return;
     game.phase = 'handover';
     game.pendingTransition = 'next-player';
     game.value = null;
     game.status = message;
     render();
-    later(advanceTurn, prefersReducedMotion ? 300 : 1050);
+    later(advanceTurn, delay);
   }
   function passByUser() {
     if (!game || player().type !== 'human' || game.phase !== 'idle') return;
@@ -1281,6 +1369,7 @@
   }
   function finishRound(winnerIndex) {
     if (!game || game.phase === 'solved') return;
+    clearLetterCallout();
     const winner = game.players[winnerIndex];
     const amount = winner.bank + SOLVE_BONUS;
     winner.total += amount;
@@ -1386,7 +1475,7 @@
     $('solveForm').addEventListener('submit', submitSolution);
     $('nextRoundBtn').addEventListener('click', nextRound);
     document.addEventListener('keydown', handleKeyboard);
-    window.addEventListener('resize', () => { sizeBoardTiles(); fairy.handleResize(); updateMobileControls(); });
+    window.addEventListener('resize', () => { sizeBoardTiles(); fairy.handleResize(); updateMobileControls(); positionLetterCallout(); });
   }
   function init() {
     drawWheel();

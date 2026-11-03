@@ -842,3 +842,167 @@ body{
 @media (prefers-reduced-motion:reduce) {
   .game-columns .controls-card { transition-duration:.01ms; }
 }
+
+
+/* V16: Spielersprechblase unter der sticky Scoreboard-Leiste.
+   Die dreieckige Spitze folgt dem ausrufenden Spieler; keine Layoutverschiebung. */
+.letter-callout {
+  position:absolute;
+  z-index:1;
+  top:calc(100% + 12px);
+  left:0;
+  width:max-content;
+  max-width:min(340px, calc(100vw - 26px));
+  color:#55200e;
+  pointer-events:none;
+  opacity:0;
+  visibility:hidden;
+  isolation:isolate;
+  transform-origin:var(--callout-tip, 50%) 0;
+  --callout-tip:50%;
+}
+.letter-callout.is-visible {
+  visibility:visible;
+  opacity:1;
+  animation:callout-enter .33s cubic-bezier(.16,1.45,.33,1) both;
+}
+.letter-callout-bubble {
+  position:relative;
+  z-index:2;
+  border:2px solid #ffe29b;
+  border-radius:17px;
+  background:linear-gradient(160deg,#fffef4 0%,#ffe9b5 100%);
+  box-shadow:0 9px 25px rgba(29,4,0,.38),0 0 0 2px rgba(151,69,14,.22),inset 0 2px 0 rgba(255,255,255,.95);
+  padding:12px 17px 12px 20px;
+  font:900 15px/1.28 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.012em;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:break-word;
+  text-shadow:0 1px 0 rgba(255,255,255,.5);
+}
+.letter-callout-bubble:before {
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:5px;
+  background:var(--speaker-color,#ffd85f);
+  box-shadow:0 0 10px var(--speaker-color,#ffd85f);
+}
+.letter-callout-tail {
+  position:absolute;
+  z-index:1;
+  top:-8px;
+  left:calc(var(--callout-tip) - 10px);
+  width:20px;height:20px;
+  background:#fff9e6;
+  border-top:2px solid #ffe29b;
+  border-left:2px solid #ffe29b;
+  border-radius:3px 0 0 0;
+  transform:rotate(45deg);
+  box-shadow:-3px -3px 9px rgba(39,11,4,.12);
+}
+.letter-callout-flare {
+  position:absolute;
+  z-index:0;
+  left:-25%;top:-80%;
+  width:150%;height:260%;
+  background:radial-gradient(ellipse,rgba(255,242,165,.95) 0%,rgba(255,188,40,.48) 30%,transparent 68%);
+  opacity:0;
+  transform:scale(.25);
+  pointer-events:none;
+}
+.letter-callout-particles {
+  position:absolute;
+  z-index:4;
+  inset:0;
+  pointer-events:none;
+}
+.letter-callout-particle {
+  position:absolute;
+  display:block;
+  left:50%;top:50%;
+  width:9px;height:9px;
+  opacity:0;
+  transform:translate(-50%,-50%) scale(.2);
+}
+.letter-callout.is-hit .letter-callout-bubble {
+  animation:callout-gold .72s ease-in both;
+}
+.letter-callout.is-hit .letter-callout-tail {
+  animation:callout-tail-gold .72s ease-in both;
+}
+.letter-callout.is-hit .letter-callout-flare {
+  animation:callout-golden-flare .72s ease-out both;
+}
+.letter-callout.is-hit .letter-callout-particle {
+  background:#ffe16a;
+  box-shadow:0 0 9px 3px rgba(255,217,89,.85);
+  clip-path:polygon(50% 0,64% 36%,100% 50%,64% 64%,50% 100%,36% 64%,0 50%,36% 36%);
+  animation:callout-particle-flight .68s ease-out var(--particle-delay,0ms) both;
+}
+.letter-callout.is-miss .letter-callout-bubble {
+  animation:callout-pop .50s cubic-bezier(.15,.65,.3,1) both;
+}
+.letter-callout.is-miss .letter-callout-tail {
+  animation:callout-tail-pop .50s ease-out both;
+}
+.letter-callout.is-miss .letter-callout-particle {
+  background:#fff3dd;
+  border:1px solid #cc6938;
+  clip-path:polygon(0 0,100% 20%,30% 100%);
+  animation:callout-particle-flight .57s cubic-bezier(.15,.55,.3,1) var(--particle-delay,0ms) both;
+}
+.letter-callout.is-miss .letter-callout-particle:nth-child(3n) {background:#ec9a60}
+.letter-callout.is-miss .letter-callout-particle:nth-child(4n) {background:#ffdb88}
+@keyframes callout-enter {
+  from {opacity:0;transform:translateY(-8px) scale(.87)}
+  to {opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes callout-gold {
+  0% {opacity:1;transform:translateY(0) scale(1);filter:brightness(1) blur(0)}
+  25% {opacity:1;transform:translateY(-2px) scale(1.08);filter:brightness(1.32) blur(0)}
+  58% {opacity:.8;transform:translateY(-7px) scale(1.11);filter:brightness(1.8) blur(2px)}
+  100% {opacity:0;transform:translateY(-23px) scale(.72);filter:brightness(2) blur(10px)}
+}
+@keyframes callout-tail-gold {
+  0% {opacity:1;transform:rotate(45deg) scale(1)}
+  40% {opacity:1;transform:rotate(45deg) scale(1.1)}
+  100% {opacity:0;transform:rotate(45deg) scale(.3)}
+}
+@keyframes callout-golden-flare {
+  0% {opacity:0;transform:scale(.25)}
+  30% {opacity:1;transform:scale(.9)}
+  70% {opacity:.88;transform:scale(1.3)}
+  100% {opacity:0;transform:scale(1.7)}
+}
+@keyframes callout-pop {
+  0% {opacity:1;transform:scale(1);filter:blur(0)}
+  23% {opacity:1;transform:scale(1.14);filter:blur(0)}
+  35% {opacity:.95;transform:scale(1.22);filter:blur(0)}
+  48% {opacity:.3;transform:scale(.6);filter:blur(2px)}
+  100% {opacity:0;transform:scale(.15);filter:blur(5px)}
+}
+@keyframes callout-tail-pop {
+  0% {opacity:1;transform:rotate(45deg) scale(1)}
+  32% {opacity:1;transform:rotate(45deg) scale(1.2)}
+  55%,100% {opacity:0;transform:rotate(45deg) scale(0)}
+}
+@keyframes callout-particle-flight {
+  0% {opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(0)}
+  14% {opacity:1}
+  65% {opacity:1}
+  100% {opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2) rotate(185deg)}
+}
+@media(max-width:440px) {
+  .letter-callout {top:calc(100% + 10px);max-width:calc(100vw - 18px)}
+  .letter-callout-bubble {padding:10px 13px 10px 16px;border-radius:13px;font-size:13px;line-height:1.24}
+}
+@media(prefers-reduced-motion:reduce) {
+  .letter-callout.is-visible {animation-duration:.01ms}
+  .letter-callout.is-hit .letter-callout-bubble,
+  .letter-callout.is-hit .letter-callout-tail,
+  .letter-callout.is-miss .letter-callout-bubble,
+  .letter-callout.is-miss .letter-callout-tail {animation-duration:.01ms}
+  .letter-callout-flare,.letter-callout-particle {display:none}
+}

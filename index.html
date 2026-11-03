@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#490c0a">
   <meta name="description" content="Ein mobilfreundliches Retro-Glücksrad für drei Spieler – lokal oder gegen den Computer, komplett offline spielbar.">
-  <title>Glücksrad – Retro Edition v13</title>
+  <title>Glücksrad – Retro Edition v15</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -46,7 +46,7 @@
         <div class="puzzle-board" id="puzzleBoard" aria-label="Rätselbrett"><div class="board-placeholder" aria-hidden="true">? ? ? &nbsp; ? ? ? ?</div><div class="fee-character" id="feeCharacter" aria-hidden="true"><span class="fee-sprite" id="feeSprite"></span></div></div>
       </section>
 
-      <div class="game-columns">
+      <div class="game-columns" id="gameColumns" data-mobile-controls="hidden">
         <section class="wheel-card" aria-labelledby="wheelHeading">
           <div class="section-heading"><div><div class="tiny-label">DREH DEIN GLÜCK</div><h2 id="wheelHeading">DAS RAD</h2></div><div class="glow-mark" aria-hidden="true">✳</div></div>
           <div class="wheel-stage">
@@ -59,7 +59,7 @@
         </section>
 
         <section class="controls-card" aria-labelledby="currentPlayerHeading">
-          <div class="turn-title-row"><div><div class="tiny-label" id="turnEyebrow">JETZT AM ZUG</div><h2 id="currentPlayerHeading">SPIELER 1</h2></div><div class="turn-badge" id="turnBadge">DEIN ZUG</div></div>
+          <div class="turn-title-row"><div><div class="tiny-label" id="turnEyebrow">JETZT AM ZUG</div><h2 id="currentPlayerHeading">SPIELER 1</h2></div><div class="turn-badge" id="turnBadge">DEIN ZUG</div><button type="button" class="pass-button mobile-pass-button" id="mobilePassBtn" aria-label="Zug abgeben">ZUG ABGEBEN</button></div>
           <p class="status-line" id="statusLine" role="status" aria-live="polite">Drehe das Rad und sammle Punkte!</p>
           <div class="actions">
             <button type="button" class="button button-spin" id="spinBtn"><span class="button-symbol" aria-hidden="true">✦</span><span>RAD DREHEN</span><span class="button-chevron" aria-hidden="true">›</span></button>
@@ -71,7 +71,7 @@
         </section>
       </div>
     </main>
-    <footer class="footer"><span>✦ RETRO EDITION V13 · MIT BUCHSTABENFEE</span><span id="saveStatus">OHNE ANMELDUNG · AUCH OFFLINE</span></footer>
+    <footer class="footer"><span>✦ RETRO EDITION V15 · MIT BUCHSTABENFEE</span><span id="saveStatus">OHNE ANMELDUNG · AUCH OFFLINE</span></footer>
   </div>
 
   <div class="overlay" id="setupOverlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">

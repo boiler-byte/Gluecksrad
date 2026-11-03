@@ -4,7 +4,7 @@
 
   const ROUNDS = 5;
   const SAVE_KEY = 'gluecksradGame';
-  const SAVE_VERSION = 13;
+  const SAVE_VERSION = 15;
   const VOWEL_COST = 250;
   const SOLVE_BONUS = 500;
   const VOWELS = 'AEIOUÄÖÜ';
@@ -435,7 +435,7 @@
     const validPlayer = p => p && typeof p.name === 'string' && p.name.length > 0 && p.name.length <= 40 &&
       (p.type === 'human' || (p.type === 'cpu' && !!DIFFICULTIES[p.difficulty])) &&
       finitePoints(p.total) && finitePoints(p.bank);
-    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, SAVE_VERSION].includes(snapshot.version) &&
+    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, SAVE_VERSION].includes(snapshot.version) &&
       (snapshot.phase !== 'revealing' || (
         ALL_KEYS.includes(snapshot.revealLetter) &&
         Number.isInteger(snapshot.revealIndex) && snapshot.revealIndex >= 0 &&
@@ -932,6 +932,23 @@
     });
   }
 
+  // V15: Die mobile Steuerkarte folgt nur dem Spielzustand.
+  // Auf Desktop bleibt die zweispaltige Ansicht aus v14 unveraendert.
+  const mobileControlsQuery = window.matchMedia('(max-width: 760px)');
+  function updateMobileControls() {
+    const columns = $('gameColumns');
+    const controls = columns.querySelector('.controls-card');
+    const human = game && player().type === 'human';
+    const mode = !human ? 'hidden'
+      : game.phase === 'idle' ? 'actions'
+      : game.phase === 'consonant' || game.phase === 'vowel' ? 'keyboard'
+      : 'hidden';
+    columns.dataset.mobileControls = mode;
+    // Nur eine ausgefahrene mobile Karte soll im Fokus erreichbar sein.
+    // Desktop-Tastatur und -Buttons duerfen weiterhin normal benutzt werden.
+    controls.inert = mobileControlsQuery.matches && mode === 'hidden';
+  }
+
   function render() {
     if (!game) return;
     $('roundLabel').textContent = 'RUNDE ' + game.round + ' / ' + ROUNDS;
@@ -959,6 +976,7 @@
     $('vowelBtn').innerHTML = game.phase === 'vowel' ? 'ABBRECHEN <span>↶</span>' : 'VOKAL <span>−250</span>';
     $('solveBtn').disabled = !canAct || game.phase !== 'idle';
     $('passBtn').disabled = !canAct || game.phase !== 'idle';
+    $('mobilePassBtn').disabled = !canAct || game.phase !== 'idle';
     if (game.phase === 'consonant') {
       $('keyboardPrompt').textContent = 'KONSONANT WÄHLEN · ' + number(game.value) + ' PKT/TREFFER';
     } else if (game.phase === 'vowel') {
@@ -988,6 +1006,7 @@
       key.classList.toggle('selectable', selectable);
       key.title = used ? 'Bereits verwendet' : (selectable ? 'Buchstabe ' + letter + ' wählen' : 'Zurzeit nicht wählbar');
     });
+    updateMobileControls();
     persistGame();
   }
   function canBuyVowel() {
@@ -1362,11 +1381,12 @@
     $('vowelBtn').addEventListener('click', chooseVowel);
     $('solveBtn').addEventListener('click', openSolve);
     $('passBtn').addEventListener('click', passByUser);
+    $('mobilePassBtn').addEventListener('click', passByUser);
     $('solveClose').addEventListener('click', () => setOverlay('solveOverlay', false));
     $('solveForm').addEventListener('submit', submitSolution);
     $('nextRoundBtn').addEventListener('click', nextRound);
     document.addEventListener('keydown', handleKeyboard);
-    window.addEventListener('resize', () => { sizeBoardTiles(); fairy.handleResize(); });
+    window.addEventListener('resize', () => { sizeBoardTiles(); fairy.handleResize(); updateMobileControls(); });
   }
   function init() {
     drawWheel();

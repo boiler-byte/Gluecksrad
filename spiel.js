@@ -483,48 +483,60 @@
       .filter(item => item && typeof item.text === 'string' && item.text.trim().length >= 4)
       .map(item => ({ text: normalizePuzzle(item.text.trim()), category: String(item.kategorie || 'Begriff').trim() || 'Begriff' }));
   }
-  // Nur noch nicht im 50er-Verlauf enthaltene und eindeutig unterscheidbare
-  // Rätsel werden verwendet (auch bei gleichem Text in zwei Kategorien).
-  function freshPuzzles() {
+  // Nur eindeutig unterscheidbare Rätsel eines Kategorie-Pools verwenden.
+  // Sobald weniger als fünf davon außerhalb des 50er-Verlaufs liegen,
+  // wird der Verlauf für die nächste Show in diesem Pool ausgesetzt.
+  // Innerhalb der Show bleibt jedes Rätsel dank des Decks einmalig.
+  function puzzleSelection(category = '') {
     const seen = new Set();
-    return availablePuzzles().filter(puzzle => {
+    const pool = availablePuzzles().filter(puzzle => {
+      if (category && puzzle.category !== category) return false;
       const key = puzzleHistory.key(puzzle.text);
-      if (!key || seen.has(key) || puzzleHistory.contains(puzzle.text)) return false;
+      if (!key || seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+    const fresh = pool.filter(puzzle => !puzzleHistory.contains(puzzle.text));
+    return {
+      puzzles: fresh.length >= ROUNDS ? fresh : pool,
+      freshCount: fresh.length,
+      totalCount: pool.length,
+      relaxed: pool.length >= ROUNDS && fresh.length < ROUNDS
+    };
   }
   function updateHistoryInfo() {
-    const usedCount = puzzleHistory.list().length;
     const category = $('categorySelect').value;
-    const availableCount = freshPuzzles().filter(p => !category || p.category === category).length;
-    $('historyHint').textContent = usedCount + ' von 50 Rätseln vorgemerkt · ' +
-      availableCount + ' neue Rätsel ' + (category ? 'in dieser Kategorie' : 'insgesamt') +
-      '. Für eine Show werden 5 benötigt.';
-    $('resetHistoryBtn').disabled = usedCount === 0;
+    const selection = puzzleSelection(category);
+    if (selection.relaxed) {
+      $('historyHint').textContent = 'Noch ' + selection.freshCount +
+        ' Rätsel außerhalb des 50er-Verlaufs. Für diese Show sind Wiederholungen aus früheren Shows erlaubt; innerhalb der 5 Runden gibt es keine Doppelungen.';
+    } else {
+      $('historyHint').textContent = puzzleHistory.list().length + ' von 50 Rätseln vorgemerkt · ' +
+        selection.freshCount + ' neue Rätsel ' + (category ? 'in dieser Kategorie' : 'insgesamt') +
+        '. Für eine Show werden 5 benötigt.';
+    }
   }
   function setupCategoryOptions() {
     const select = $('categorySelect');
     const previous = select.value;
-    const puzzles = freshPuzzles();
-    const counts = new Map();
-    for (const puzzle of availablePuzzles()) {
-      if (!counts.has(puzzle.category)) counts.set(puzzle.category, 0);
-    }
-    puzzles.forEach(puzzle => counts.set(puzzle.category, (counts.get(puzzle.category) || 0) + 1));
+    const allSelection = puzzleSelection();
+    const categoryNames = [...new Set(availablePuzzles().map(p => p.category))]
+      .sort((a, b) => a.localeCompare(b, 'de'));
     select.replaceChildren();
     const all = document.createElement('option');
     all.value = '';
-    all.textContent = 'Alle Kategorien (' + puzzles.length + ' verfügbar)';
-    all.disabled = puzzles.length < ROUNDS;
+    all.textContent = 'Alle Kategorien (' + allSelection.puzzles.length + ' verfügbar)';
+    all.disabled = allSelection.totalCount < ROUNDS;
     select.appendChild(all);
-    const categoryNames = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'de'));
     for (const category of categoryNames) {
-      const count = counts.get(category);
+      const selection = puzzleSelection(category);
+      const count = selection.puzzles.length;
       const option = document.createElement('option');
       option.value = category;
-      option.textContent = category + ' (' + count + ' verfügbar)' + (count < ROUNDS ? ' – zu wenige für 5 Runden' : '');
-      option.disabled = count < ROUNDS;
+      option.textContent = category + ' (' + count + ' verfügbar)' +
+        (selection.totalCount < ROUNDS ? ' – zu wenige für 5 Runden' :
+          selection.relaxed ? ' – Verlauf ausgesetzt' : '');
+      option.disabled = selection.totalCount < ROUNDS;
       select.appendChild(option);
     }
     setCategorySelection(previous);
@@ -718,25 +730,19 @@
     resumeGame();
   }
 
-  function resetPuzzleHistory() {
-    if (!puzzleHistory.list().length) return;
-    if (!window.confirm('Den Verlauf der letzten 50 Rätsel löschen? Danach können bereits gespielte Wörter und Sätze wieder erscheinen.')) return;
-    const selected = $('categorySelect').value;
-    puzzleHistory.clear();
-    setupCategoryOptions();
-    setCategorySelection(selected);
-    toast('Der Rätselverlauf wurde zurückgesetzt.');
-  }
-
   function newGame() {
     const oldSave = readSavedGame();
     const last = oldSave || game;
     if (last && !(last.phase === 'solved' && last.round === ROUNDS) &&
         !window.confirm('Die gespeicherte Show wird ersetzt. Eine neue Show starten?')) return;
     const categoryFilter = $('categorySelect').value;
-    const words = freshPuzzles().filter(puzzle => !categoryFilter || puzzle.category === categoryFilter);
+    // Der 50er-Verlauf gilt, solange mindestens fünf frische Rätsel übrig sind.
+    // Sonst auch ältere zulassen, aber nie zwei gleiche in derselben Show.
+    puzzleHistory.reload();
+    const selection = puzzleSelection(categoryFilter);
+    const words = selection.puzzles;
     if (words.length < ROUNDS) {
-      toast('Nur ' + words.length + ' unverbrauchte Rätsel verfügbar. Bitte Kategorie wechseln oder Verlauf löschen.');
+      toast('Nur ' + words.length + ' unterschiedliche Rätsel verfügbar. Für eine Show werden 5 benötigt.');
       return;
     }
     stopPending();
@@ -850,11 +856,14 @@
   }
 
   function choosePuzzle() {
-    // Falls parallel ein zweiter Tab gespielt wurde, den Verlauf erneut lesen.
+    // Auch bei unterbrochenen Partien / parallelen Tabs die frischen Wörter
+    // zuerst verwenden. Erst danach alte Rätsel aus dem Show-Deck zulassen.
     puzzleHistory.reload();
     let index = game.deck.findIndex(entry =>
       !puzzleHistory.contains(entry.text) && entry.category !== game.previousCategory);
     if (index < 0) index = game.deck.findIndex(entry => !puzzleHistory.contains(entry.text));
+    if (index < 0) index = game.deck.findIndex(entry => entry.category !== game.previousCategory);
+    if (index < 0 && game.deck.length) index = 0;
     if (index < 0) return null;
     const [entry] = game.deck.splice(index, 1);
     game.previousCategory = entry.category;
@@ -865,7 +874,7 @@
     const puzzle = choosePuzzle();
     if (!puzzle) {
       openSetup();
-      toast('Keine unverbrauchten Rätsel übrig. Bitte Kategorie wechseln oder Verlauf löschen.');
+      toast('Keine weiteren unterschiedlichen Rätsel für diese Show vorhanden.');
       return;
     }
     // Bereits beim Rundenbeginn vormerken: Auch Abbruch oder Neuladen darf
@@ -1434,7 +1443,6 @@
     $('fairySelect').addEventListener('change', () => setFairySelection($('fairySelect').value));
     $('startBtn').addEventListener('click', newGame);
     $('categorySelect').addEventListener('change', updateHistoryInfo);
-    $('resetHistoryBtn').addEventListener('click', resetPuzzleHistory);
     $('resumeBtn').addEventListener('click', resumeGame);
     $('scoreMenuBtn').addEventListener('click', toggleScoreMenu);
     document.addEventListener('pointerdown', event => {

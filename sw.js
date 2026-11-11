@@ -1,5 +1,5 @@
 /* Glücksrad v21: App-Shell vollständig offline bereitstellen. */
-const CACHE_NAME = 'gluecksrad-pwa-v21-1';
+const CACHE_NAME = 'gluecksrad-pwa-v21-2';
 const OLD_CACHE_PREFIX = 'gluecksrad-pwa-';
 const FILES = [
   './',

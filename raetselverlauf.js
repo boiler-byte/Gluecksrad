@@ -42,11 +42,15 @@
   }
   function record(text) {
     const value = key(text);
-    if (!value || recent.includes(value)) return false;
+    if (!value) return false;
+    // Wird ein älteres Rätsel nach Freigabe erneut gespielt, gehört es
+    // wieder ans Ende des Verlaufs (letzte Verwendung zählt).
+    const index = recent.indexOf(value);
+    if (index !== -1) recent.splice(index, 1);
     recent.push(value);
     if (recent.length > LIMIT) recent.shift();
     write();
-    return true;
+    return index === -1;
   }
   function clear() {
     recent = [];

@@ -4,7 +4,7 @@
 
   const ROUNDS = 5;
   const SAVE_KEY = 'gluecksradGame';
-  const SAVE_VERSION = 20;
+  const SAVE_VERSION = 21;
   const VOWEL_COST = 250;
   const SOLVE_BONUS = 500;
   const VOWELS = 'AEIOUÄÖÜ';
@@ -76,6 +76,7 @@
   let letterCalloutToken = 0;
   const timers = new Set();
   const fairy = window.GluecksradFee;
+  const puzzleHistory = window.GluecksradVerlauf;
   const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function later(callback, ms) {
@@ -482,30 +483,58 @@
       .filter(item => item && typeof item.text === 'string' && item.text.trim().length >= 4)
       .map(item => ({ text: normalizePuzzle(item.text.trim()), category: String(item.kategorie || 'Begriff').trim() || 'Begriff' }));
   }
+  // Nur noch nicht im 50er-Verlauf enthaltene und eindeutig unterscheidbare
+  // Rätsel werden verwendet (auch bei gleichem Text in zwei Kategorien).
+  function freshPuzzles() {
+    const seen = new Set();
+    return availablePuzzles().filter(puzzle => {
+      const key = puzzleHistory.key(puzzle.text);
+      if (!key || seen.has(key) || puzzleHistory.contains(puzzle.text)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  function updateHistoryInfo() {
+    const usedCount = puzzleHistory.list().length;
+    const category = $('categorySelect').value;
+    const availableCount = freshPuzzles().filter(p => !category || p.category === category).length;
+    $('historyHint').textContent = usedCount + ' von 50 Rätseln vorgemerkt · ' +
+      availableCount + ' neue Rätsel ' + (category ? 'in dieser Kategorie' : 'insgesamt') +
+      '. Für eine Show werden 5 benötigt.';
+    $('resetHistoryBtn').disabled = usedCount === 0;
+  }
   function setupCategoryOptions() {
     const select = $('categorySelect');
-    const puzzles = availablePuzzles();
+    const previous = select.value;
+    const puzzles = freshPuzzles();
     const counts = new Map();
+    for (const puzzle of availablePuzzles()) {
+      if (!counts.has(puzzle.category)) counts.set(puzzle.category, 0);
+    }
     puzzles.forEach(puzzle => counts.set(puzzle.category, (counts.get(puzzle.category) || 0) + 1));
     select.replaceChildren();
     const all = document.createElement('option');
     all.value = '';
-    all.textContent = 'Alle Kategorien (' + puzzles.length + ' Rätsel)';
+    all.textContent = 'Alle Kategorien (' + puzzles.length + ' verfügbar)';
+    all.disabled = puzzles.length < ROUNDS;
     select.appendChild(all);
     const categoryNames = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'de'));
     for (const category of categoryNames) {
       const count = counts.get(category);
       const option = document.createElement('option');
       option.value = category;
-      option.textContent = category + ' (' + count + ' Rätsel)' + (count < ROUNDS ? ' – mindestens 5 benötigt' : '');
+      option.textContent = category + ' (' + count + ' verfügbar)' + (count < ROUNDS ? ' – zu wenige für 5 Runden' : '');
       option.disabled = count < ROUNDS;
       select.appendChild(option);
     }
+    setCategorySelection(previous);
+    updateHistoryInfo();
   }
   function setCategorySelection(category) {
     const select = $('categorySelect');
     const value = typeof category === 'string' ? category : '';
     select.value = [...select.options].some(option => option.value === value && !option.disabled) ? value : '';
+    updateHistoryInfo();
   }
   function setupFairyOptions() {
     const select = $('fairySelect');
@@ -551,7 +580,7 @@
     const validPlayer = p => p && typeof p.name === 'string' && p.name.length > 0 && p.name.length <= 40 &&
       (p.type === 'human' || (p.type === 'cpu' && !!DIFFICULTIES[p.difficulty])) &&
       finitePoints(p.total) && finitePoints(p.bank);
-    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, SAVE_VERSION].includes(snapshot.version) &&
+    return !!snapshot && [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, SAVE_VERSION].includes(snapshot.version) &&
       (snapshot.phase !== 'revealing' || (
         ALL_KEYS.includes(snapshot.revealLetter) &&
         Number.isInteger(snapshot.revealIndex) && snapshot.revealIndex >= 0 &&
@@ -665,6 +694,7 @@
   }
   function openSetup() {
     closeScoreMenu();
+    setupCategoryOptions();
     if (game) {
       // Das Show-Menue pausiert Timer, Computerzuege und Radanimation.
       stopPending();
@@ -688,16 +718,25 @@
     resumeGame();
   }
 
+  function resetPuzzleHistory() {
+    if (!puzzleHistory.list().length) return;
+    if (!window.confirm('Den Verlauf der letzten 50 Rätsel löschen? Danach können bereits gespielte Wörter und Sätze wieder erscheinen.')) return;
+    const selected = $('categorySelect').value;
+    puzzleHistory.clear();
+    setupCategoryOptions();
+    setCategorySelection(selected);
+    toast('Der Rätselverlauf wurde zurückgesetzt.');
+  }
+
   function newGame() {
     const oldSave = readSavedGame();
     const last = oldSave || game;
     if (last && !(last.phase === 'solved' && last.round === ROUNDS) &&
         !window.confirm('Die gespeicherte Show wird ersetzt. Eine neue Show starten?')) return;
     const categoryFilter = $('categorySelect').value;
-    const words = availablePuzzles().filter(puzzle => !categoryFilter || puzzle.category === categoryFilter);
+    const words = freshPuzzles().filter(puzzle => !categoryFilter || puzzle.category === categoryFilter);
     if (words.length < ROUNDS) {
-      toast(categoryFilter ? 'Für „' + categoryFilter + '“ sind mindestens fünf Rätsel nötig.' :
-        'Bitte mindestens fünf Rätsel in woerter.js eintragen.');
+      toast('Nur ' + words.length + ' unverbrauchte Rätsel verfügbar. Bitte Kategorie wechseln oder Verlauf löschen.');
       return;
     }
     stopPending();
@@ -811,19 +850,31 @@
   }
 
   function choosePuzzle() {
-    let index = game.deck.findIndex(entry => entry.category !== game.previousCategory);
-    if (index < 0) index = 0;
+    // Falls parallel ein zweiter Tab gespielt wurde, den Verlauf erneut lesen.
+    puzzleHistory.reload();
+    let index = game.deck.findIndex(entry =>
+      !puzzleHistory.contains(entry.text) && entry.category !== game.previousCategory);
+    if (index < 0) index = game.deck.findIndex(entry => !puzzleHistory.contains(entry.text));
+    if (index < 0) return null;
     const [entry] = game.deck.splice(index, 1);
     game.previousCategory = entry.category;
     return entry;
   }
   function startRound() {
     if (!game || game.round >= ROUNDS) return;
+    const puzzle = choosePuzzle();
+    if (!puzzle) {
+      openSetup();
+      toast('Keine unverbrauchten Rätsel übrig. Bitte Kategorie wechseln oder Verlauf löschen.');
+      return;
+    }
+    // Bereits beim Rundenbeginn vormerken: Auch Abbruch oder Neuladen darf
+    // das aktuelle Rätsel nicht erneut für eine andere Partie freigeben.
+    puzzleHistory.record(puzzle.text);
     clearLetterCallout();
     game.round++;
     game.sectorEffects = createRoundSectorEffects(game.round);
     applyRoundSectors();
-    const puzzle = choosePuzzle();
     game.phrase = puzzle.text;
     game.category = puzzle.category;
     game.used = new Set();
@@ -1382,6 +1433,8 @@
     }
     $('fairySelect').addEventListener('change', () => setFairySelection($('fairySelect').value));
     $('startBtn').addEventListener('click', newGame);
+    $('categorySelect').addEventListener('change', updateHistoryInfo);
+    $('resetHistoryBtn').addEventListener('click', resetPuzzleHistory);
     $('resumeBtn').addEventListener('click', resumeGame);
     $('scoreMenuBtn').addEventListener('click', toggleScoreMenu);
     document.addEventListener('pointerdown', event => {
@@ -1403,6 +1456,9 @@
     $('nextRoundBtn').addEventListener('click', nextRound);
     document.addEventListener('keydown', handleKeyboard);
     window.addEventListener('resize', () => { sizeBoardTiles(); fairy.handleResize(); updateMobileControls(); positionLetterCallout(); });
+    window.addEventListener('storage', event => {
+      if (event.key === puzzleHistory.STORAGE_KEY || event.key === null) setupCategoryOptions();
+    });
   }
   function init() {
     drawWheel();
@@ -1414,6 +1470,10 @@
     refreshSoundButton();
     const saved = readSavedGame();
     if (saved) {
+      // Alte Speicherstände enthielten noch keinen separaten Rätselverlauf.
+      // Das aktuelle Rätsel lässt sich beim Upgrade nachtragen.
+      if (saved.version < SAVE_VERSION) puzzleHistory.record(saved.phrase);
+      setupCategoryOptions();
       setConfigFromPlayers(saved.players);
       setFairySelection(saved.fairyId || fairy.defaultVariant());
       setCategorySelection(saved.categoryFilter);

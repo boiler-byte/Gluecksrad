@@ -1,14 +1,29 @@
-# Glücksrad – Retro Edition v19
+# Glücksrad – Retro Edition v21
 
 Ein eigenständiges, offline spielbares HTML-Buchstabenspiel im Stil einer 90er-TV-Show. Drei frei konfigurierbare Spielerplätze, Computergegner in drei Schwierigkeitsstufen, animierte Buchstabenwand, Sounds, eigenes Rätselarchiv und automatische Spielstand-Speicherung. Keine offizielle Ausgabe der Fernsehsendung.
 
-## Starten
+## Starten und als PWA installieren
 
-1. `gluecksrad-v19.zip` entpacken.
-2. Alle enthaltenen Dateien im Ordner `gluecksrad-v19` zusammen belassen.
-3. `index.html` im Browser öffnen. Es sind keine Installation und keine Internetverbindung erforderlich.
-4. Spieler 1 ist standardmäßig **Spieler**, Spieler 2 und 3 sind standardmäßig **Computer Leicht**. Die Spielertypen und Namen können angepasst werden. Die Felder enthalten keine zusätzlichen sichtbaren Labels, bleiben aber für Screenreader beschriftet.
-5. Die gewünschte **Buchstabenfee** auswählen (Standard: Sonya Kraus; zusätzlich Marin Gilzer). **SHOW STARTEN** beginnt die Partie; **SHOW FORTSETZEN** lädt eine gespeicherte Partie mit ihrer eigenen Fee.
+1. `Gluecksrad-PWA-v21.zip` entpacken und **alle Dateien und Ordner zusammen belassen**.
+2. Für eine installierbare PWA muss das Spiel über **HTTPS** oder `http://localhost` geöffnet werden; direktes `file://` unterstützt keine Service Worker. Eine lokale Testmöglichkeit im entpackten Ordner:
+
+   ```bash
+   python3 -m http.server 8000
+   ```
+
+   Anschließend `http://localhost:8000/` im Browser aufrufen. Alternativ den kompletten Ordner auf eine HTTPS-Website hochladen.
+3. Auf unterstützten Browsern über **Installieren / Zum Startbildschirm hinzufügen** die App installieren. Die PWA startet im eigenen Fenster. Chrome und Edge bieten meist ein Installationssymbol in der Adresszeile; auf iOS Safari erfolgt die Installation über **Teilen → Zum Home-Bildschirm**.
+4. Nach dem ersten erfolgreichen Laden und der Service-Worker-Installation sind Spiel, Wörterarchiv, sämtliche Sprites, Styles und Skripte **ohne Internetverbindung** verfügbar. Die PWA kann erst nach einem erfolgreichen Online-Laden offline verwendet werden.
+5. `index.html` lässt sich außerdem weiterhin direkt als normale HTML-Datei öffnen; in diesem Fall **ohne PWA-Installation**, und die Verfügbarkeit des Browser-Speichers ist unter `file://` browserabhängig.
+6. Die drei Spielerplätze, die Buchstabenfee und die Rätselkategorie wie bisher konfigurieren. Mit **SHOW STARTEN** beginnt eine fünf Runden lange Partie; **SHOW FORTSETZEN** lädt einen vorhandenen Spielstand.
+
+## Neu in v21 – Rätselverlauf und PWA
+
+- **Keine Wiederholung der letzten 50 Rätsel:** Beim Start einer Runde wird ihr Text unter `localStorage.gluecksradRecentPuzzles` gespeichert. Der eigenständige Verlauf bleibt über Partien, Browser-Neustarts und das Fortsetzen gespeicherter Spiele hinweg erhalten. Gleicher Text wird auch bei anderer Großschreibung, Zeichensetzung und Umlautschreibweise wiedererkannt und in anderen Kategorien übersprungen.
+- **Kategorien berücksichtigen den Verlauf:** Im Startmenü wird die Zahl der aktuell verfügbaren Rätsel pro Kategorie angezeigt. Es sind fünf unterschiedliche unverbrauchte Rätsel für eine neue Show nötig. Sind weniger vorhanden, ist die Kategorie zunächst nicht wählbar. Der Verlauf wird **nicht automatisch ignoriert**, auch wenn eine Kategorie weniger als 50 Rätsel enthält. Über **VERLAUF LÖSCHEN** kann er nach Bestätigung bewusst zurückgesetzt werden.
+- **Fortsetzbare alte Spielstände:** Der Speicherstand unter `gluecksradGame` bleibt kompatibel zu Version 20 und den früheren Versionen 2–19. Bei einem alten Spielstand wird das gerade laufende Rätsel einmalig in den neuen Verlauf übernommen; ältere Runden können nachträglich nicht vollständig rekonstruiert werden.
+- **PWA:** `manifest.webmanifest`, Installationsicons, `pwa.js` und `sw.js` ermöglichen die Installation auf Smartphone/Tablet/Desktop. Der Service Worker hält beide Seiten samt allen benötigten Assets für Offlinebetrieb im Cache. Änderungen werden beim nächsten Laden mit Verbindung und erfolgter Service-Worker-Aktualisierung übernommen.
+- **Datenspeicherung:** Verlauf und Spielstände liegen ausschließlich im lokalen Browser-Profil der verwendeten Website-Adresse; sie werden nicht zwischen Geräten synchronisiert. Löschen der Website-Daten entfernt auch den Verlauf. Wenn der Browser `localStorage` verweigert, bleibt nur der Verlauf der aktuellen Sitzung im Arbeitsspeicher.
 
 ## Neu in v19
 
@@ -159,6 +174,11 @@ localStorage.removeItem('gluecksradGame');
 | `index.html` | Spieloberfläche und Feenauswahl im Startmenü |
 | `styles.css` | Bühnendesign, Kacheln, mobile Darstellung, Sprites |
 | `spiel.js` | Spielregeln, CPU, Runden, Sounds, Speicherstände |
+| `raetselverlauf.js` | Lokal gespeicherter Verlauf der letzten 50 Rätsel |
+| `manifest.webmanifest` | PWA-Metadaten und Installationsicons |
+| `pwa.js` | Service-Worker-Registrierung unter HTTPS / localhost |
+| `sw.js` | Cache und Offlinebetrieb von Spiel und Wörterarchiv |
+| `icons/` | Installationssymbole für Browser und Startbildschirm |
 | `buchstabenfee.js` | Geh-, Greif-, Klatsch- und Sprungabläufe, Offscreen-Ausgang, Wechsel zwischen Sprite-Varianten |
 | `feen.js` | **Erweiterbare JS-Objekte für Namen und Atlas-Dateien der Feen** |
 | `buchstabenfee-atlas.webp` | Sonya Kraus (hellblau): 1800 × 1050, 6×3 Frames à 300 × 350 |
